@@ -1530,8 +1530,17 @@ kbd {
 :root[data-skin="cozy"] .react-chip,
 :root[data-skin="cozy"] .react-bar button { background: rgba(255,255,255,.85); color: #3b2f27; border-color: rgba(160,120,80,.2); }
 
-/* iridescent pearl memory sphere (the hub centerpiece) */
+/* The Universe — animated 3D starfield centerpiece (doubles as search portal) */
 .memory-sphere { display: grid; place-items: center; padding: 14px 0 6px; }
+.memory-sphere .universe {
+  width: 132px; height: 132px; border-radius: 50%; cursor: pointer; display: block;
+  box-shadow: 0 16px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(229,211,179,.18), inset 0 0 30px rgba(0,0,0,.6);
+  transition: transform .3s var(--spring), box-shadow .3s var(--ease);
+}
+.memory-sphere .universe:hover { transform: scale(1.05); box-shadow: 0 20px 48px rgba(0,0,0,.5), 0 0 26px rgba(229,211,179,.35), inset 0 0 30px rgba(0,0,0,.55); }
+.memory-sphere .cap { margin-top: 13px; color: var(--text-dim); font-size: 12.5px; font-weight: 600; letter-spacing: .02em; }
+
+/* legacy iridescent pearl orb — retained for reference, no longer rendered */
 .memory-sphere .orb {
   width: 132px; height: 132px; border-radius: 50%; position: relative;
   background:
@@ -2004,4 +2013,60 @@ kbd {
   #toast-root { bottom: calc(22px + env(safe-area-inset-bottom)); right: calc(22px + env(safe-area-inset-right)); }
   /* full-screen overlays (calls, viewers, sheets) keep their close buttons reachable */
   .call-veil, .vo-viewer, .replay-veil { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE (WhatsApp-style) — phones ≤768px only. Desktop & tablet keep the rail.
+   A fixed top bar (brand · worlds · search · you) + a fixed bottom tab dock;
+   conversations go full-screen with the app chrome hidden.
+   ══════════════════════════════════════════════════════════════════════════ */
+.mobile-top, .mobile-tabs { display: none; }
+
+@media (max-width: 768px) {
+  .rail { display: none; }
+  .shell { flex-direction: column; }
+  .main { width: 100%; }
+
+  .mobile-top {
+    display: flex; align-items: center; gap: 10px;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+    padding: calc(9px + env(safe-area-inset-top)) 14px 9px;
+    background: color-mix(in srgb, var(--bg-2) 88%, transparent); backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--line);
+  }
+  .mt-brand { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; letter-spacing: .04em; }
+  .mt-worlds { display: flex; gap: 4px; margin-left: auto; }
+  .mt-ws { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: var(--text-dim); background: transparent; border: 1px solid transparent; }
+  .mt-ws.active { background: var(--accent-soft); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .mt-icon { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: var(--text); background: var(--bg-3); flex-shrink: 0; }
+  .mt-me { flex-shrink: 0; padding: 0; background: transparent; }
+
+  .mobile-tabs {
+    display: flex; align-items: stretch;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg-2) 92%, transparent); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--line);
+  }
+  .mtab {
+    flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 2px; color: var(--text-faint); font-size: 10px; font-weight: 600;
+    background: transparent; border-radius: 12px;
+  }
+  .mtab .mti { position: relative; display: grid; place-items: center; }
+  .mtab.active { color: var(--accent); }
+  .mtl { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mbadge {
+    position: absolute; top: -5px; right: -9px; min-width: 15px; height: 15px; padding: 0 4px;
+    border-radius: 99px; background: var(--critical); color: #fff; font-size: 9px; font-weight: 800;
+    display: grid; place-items: center; line-height: 1;
+  }
+
+  /* content clears the two fixed bars */
+  .page { padding-top: calc(60px + env(safe-area-inset-top)) !important; padding-bottom: calc(74px + env(safe-area-inset-bottom)) !important; }
+
+  /* In a conversation → full-screen, hide the app chrome (WhatsApp behaviour) */
+  .shell:has(.convo-main) .mobile-top,
+  .shell:has(.convo-main) .mobile-tabs { display: none; }
+  .convo-head { position: sticky; top: 0; z-index: 20; }
 }

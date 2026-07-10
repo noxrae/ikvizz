@@ -49,6 +49,25 @@ export async function verifyGoogleToken(credential) {
   return payload;
 }
 
+/**
+ * Verify a Google OAuth2 access token (from the custom-button popup flow) by
+ * calling Google's userinfo endpoint. Returns a payload shaped like the ID
+ * token so userForGoogle() can consume either path.
+ */
+export async function verifyGoogleAccessToken(accessToken) {
+  if (!GOOGLE_CLIENT_ID) throw httpErr(501, 'Google sign-in is not configured on this server yet.');
+  const at = String(accessToken || '');
+  if (!at) throw httpErr(400, 'Missing Google access token.');
+  const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: 'Bearer ' + at }, signal: AbortSignal.timeout(6000),
+  });
+  if (!r.ok) throw httpErr(401, 'Could not verify your Google sign-in — please try again.');
+  const info = await r.json();
+  if (!info.sub) throw httpErr(401, 'Google did not return an account id.');
+  if (!info.email || info.email_verified === false) throw httpErr(401, 'Your Google account has no verified email.');
+  return { sub: info.sub, email: info.email, email_verified: info.email_verified, name: info.name, picture: info.picture };
+}
+
 /** Find-or-create the IKVIZZ account behind a verified Google payload. */
 export function userForGoogle(payload) {
   // 1) already linked by Google id

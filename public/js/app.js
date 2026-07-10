@@ -65,6 +65,71 @@ const timeLeft = until => {
 };
 const initials = name => name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
+/* ── The Universe — a live 3D warp-starfield that doubles as the search portal.
+   Stars stream out of a glowing core with perspective depth; a slow parallax
+   spin gives it real dimensionality. Small, self-contained, reduced-motion aware. */
+let _uniRAF = null;
+function startUniverse(canvas) {
+  if (!canvas) return;
+  cancelAnimationFrame(_uniRAF);
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.min(2, window.devicePixelRatio || 1);
+  const S_ = 132;                 // css size
+  canvas.width = S_ * DPR; canvas.height = S_ * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const cx = S_ / 2, cy = S_ / 2;
+  const palette = ['#ffffff', '#ffffff', '#f3e6c8', '#cbb489', '#bcd0ff', '#e6c6ff'];
+  // deterministic-ish pseudo-random (no external dep) seeded per star
+  const rnd = () => Math.random();
+  const N = 150;
+  const mk = () => ({ x: rnd() * 2 - 1, y: rnd() * 2 - 1, z: rnd(), c: palette[(rnd() * palette.length) | 0], t: rnd() * Math.PI * 2 });
+  const stars = Array.from({ length: N }, mk);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let spin = 0;
+
+  const frame = () => {
+    ctx.clearRect(0, 0, S_, S_);
+    // deep-space base + glowing galactic core
+    ctx.fillStyle = '#070610';
+    ctx.beginPath(); ctx.arc(cx, cy, S_ / 2, 0, 7); ctx.fill();
+    const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, S_ / 2);
+    core.addColorStop(0, 'rgba(229,211,179,0.22)');
+    core.addColorStop(0.4, 'rgba(150,120,220,0.10)');
+    core.addColorStop(1, 'transparent');
+    ctx.fillStyle = core; ctx.beginPath(); ctx.arc(cx, cy, S_ / 2, 0, 7); ctx.fill();
+
+    spin += 0.0016;
+    for (const s of stars) {
+      s.z -= 0.0055;
+      if (s.z <= 0.02) { Object.assign(s, mk()); s.z = 1; }
+      const k = 0.62 / s.z;               // perspective
+      const ang = spin;                    // slow parallax rotation
+      const rx = s.x * Math.cos(ang) - s.y * Math.sin(ang);
+      const ry = s.x * Math.sin(ang) + s.y * Math.cos(ang);
+      const px = cx + rx * k * cx;
+      const py = cy + ry * k * cy;
+      const dx = px - cx, dy = py - cy;
+      if (dx * dx + dy * dy > (S_ / 2) * (S_ / 2)) continue; // clip to disc
+      const depth = 1 - s.z;
+      const r = Math.max(0.35, depth * 2);
+      const tw = reduce ? 1 : 0.7 + 0.3 * Math.sin(s.t + spin * 40); // twinkle
+      ctx.globalAlpha = Math.min(1, depth * 1.3) * tw;
+      ctx.fillStyle = s.c;
+      ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fill();
+      // a faint motion trail on the fastest (nearest) stars
+      if (depth > 0.7 && !reduce) {
+        ctx.globalAlpha *= 0.25;
+        ctx.beginPath(); ctx.moveTo(px, py);
+        ctx.lineTo(cx + rx * (0.62 / (s.z + 0.03)) * cx, cy + ry * (0.62 / (s.z + 0.03)) * cy);
+        ctx.strokeStyle = s.c; ctx.lineWidth = r * 0.8; ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    if (!reduce) _uniRAF = requestAnimationFrame(frame);
+  };
+  frame();
+}
+
 /** avatar_config arrives as a JSON string from the server (or already parsed). */
 function parseAvatarConfig(raw) {
   if (!raw) return null;
@@ -222,7 +287,7 @@ async function renderAuth(mode = 'login') {
       <p class="tagline">Communication should transfer understanding, not messages.</p>
       <form id="auth-form">
         ${isReg ? `<div class="field"><label>Your name</label><input class="input" name="displayName" placeholder="Aarav Sharma" /></div>` : ''}
-        <div class="field"><label>${sb && !isReg ? 'Username or email' : 'Username'}</label><input class="input" name="username" autocomplete="username" placeholder="${sb && !isReg ? 'aarav — or you@example.com' : 'aarav'}" required /></div>
+        <div class="field"><label>${isReg && sb ? 'Username' : 'Username or email'}</label><input class="input" name="username" autocomplete="username" placeholder="${isReg && sb ? 'aarav' : 'aarav — or you@gmail.com'}" required /></div>
         ${isReg && sb ? `<div class="field"><label>Email</label><input class="input" name="email" type="email" autocomplete="email" placeholder="you@example.com" required /></div>` : ''}
         ${isReg ? `<div class="field"><label>Phone <span class="faint">(optional — so friends can find you, like WhatsApp)</span></label><input class="input" name="phone" type="tel" autocomplete="tel" placeholder="+91 98765 43210" /></div>` : ''}
         <div class="field"><label>Password</label><input class="input" name="password" type="password" autocomplete="${isReg ? 'new-password' : 'current-password'}" placeholder="••••••••" required /></div>
@@ -309,20 +374,25 @@ async function wireGoogleSignIn() {
       document.head.appendChild(s);
     }).catch(() => null);
   }
-  if (!window.google?.accounts) { btn.onclick = () => toast('Could not reach Google right now.', true); return; }
-  window.google.accounts.id.initialize({
+  if (!window.google?.accounts?.oauth2) { btn.onclick = () => toast('Could not reach Google right now.', true); return; }
+  // OAuth2 token flow behind OUR own "Continue with Google" button — the popup
+  // shows Google's neutral account chooser, and works for brand-new users too
+  // (the server find-or-creates the account). No personalized "Sign in as …".
+  const client = window.google.accounts.oauth2.initTokenClient({
     client_id: cfg.googleClientId,
+    scope: 'openid email profile',
     callback: async resp => {
+      const el = $('#auth-error');
+      if (resp.error || !resp.access_token) { if (el) el.textContent = 'Google sign-in was cancelled.'; return; }
       try {
-        const data = await api('/auth/google', { body: { credential: resp.credential } });
+        const data = await api('/auth/google', { body: { accessToken: resp.access_token } });
         S.token = data.token;
         localStorage.setItem('aether_token', data.token);
         await boot();
-      } catch (e) { const el = $('#auth-error'); if (el) el.textContent = e.message; }
+      } catch (e) { if (el) el.textContent = e.message; }
     },
   });
-  btn.style.display = 'none'; // swap our placeholder for Google's official button
-  window.google.accounts.id.renderButton($('#gsi-slot'), { theme: 'outline', size: 'large', shape: 'pill', width: 300 });
+  btn.onclick = () => { try { client.requestAccessToken(); } catch { toast('Could not open Google sign-in.', true); } };
 }
 
 // ------------------------------------------------------------------ boot -----
@@ -526,7 +596,7 @@ function route() {
     S.view = { name: 'today' };
     if (location.hash !== '#/today') { go('/today'); return; }
   }
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === S.view.name || (name === 'chat' && b.dataset.nav === 'people') || (name === 'space' && b.dataset.nav === 'spaces')));
+  document.querySelectorAll('.nav-item, .mtab').forEach(b => b.classList.toggle('active', b.dataset.nav === S.view.name || (name === 'chat' && b.dataset.nav === 'people') || (name === 'space' && b.dataset.nav === 'spaces')));
   // Invite links: aether/#/add/<username> lands here and pre-fills Add person
   if (S.view.name === 'add' && arg) {
     S.pendingAdd = decodeURIComponent(arg);
@@ -587,20 +657,43 @@ function renderShell() {
         <div class="who"><div class="nm">${esc(S.me.display_name)}</div><div class="ctx" id="me-ctx">${icon(ctx[0], 12)} ${ctx[1]}</div></div>
       </div>
     </nav>
+
+    <!-- Mobile chrome (WhatsApp-style): a top bar + a bottom tab dock. Hidden on
+         desktop; the left rail is hidden on phones. Same data-nav/data-world
+         wiring drives both, so nothing is duplicated in logic. -->
+    <header class="mobile-top">
+      <span class="mt-brand">${icon('aether', 18, 'accent')}<b>IKVIZZ</b></span>
+      <div class="mt-worlds">
+        ${Object.entries(WORLDS).filter(([k]) => worldEnabled(k)).map(([k, w]) =>
+          `<button class="mt-ws ${k === S.world ? 'active' : ''}" data-world="${k}" title="${w.label}" aria-label="${w.label}">${icon(w.ic, 16)}</button>`).join('')}
+      </div>
+      <button class="mt-icon" id="m-search" aria-label="Search">${icon('search', 18)}</button>
+      <button class="mt-me" data-nav="me" aria-label="Your profile">${avatarHtml(S.me, 'sm')}</button>
+    </header>
+
     <main class="main" id="main"></main>
+
+    <nav class="mobile-tabs">
+      ${world.nav.map(([key, ico, lbl]) =>
+        `<button class="mtab" data-nav="${key}"><span class="mti">${icon(ico, 21)}${key === 'people' ? '<span class="mbadge" id="m-unread-badge" style="display:none"></span>' : ''}</span><span class="mtl">${lbl}</span></button>`).join('')}
+      <button class="mtab" data-nav="alerts"><span class="mti">${icon('bell', 21)}<span class="mbadge" id="m-notif-badge" style="display:none"></span></span><span class="mtl">Alerts</span></button>
+    </nav>
   </div>`;
   document.querySelectorAll('[data-nav]').forEach(b => b.onclick = () => go('/' + b.dataset.nav));
   document.querySelectorAll('[data-world]').forEach(b => b.onclick = () => setWorld(b.dataset.world));
   $('#rail-search').onclick = () => togglePalette(true);
+  const ms = $('#m-search'); if (ms) ms.onclick = () => togglePalette(true);
   updateBadges();
 }
 
 function updateBadges() {
   const n = totalUnread();
-  const b = $('#unread-badge');
-  if (b) { b.style.display = n ? '' : 'none'; b.textContent = n > 99 ? '99+' : n; }
-  const nb = $('#notif-badge'), nn = S.notifUnread || 0;
-  if (nb) { nb.style.display = nn ? '' : 'none'; nb.textContent = nn > 99 ? '99+' : nn; }
+  const setBadge = (el, v) => { if (el) { el.style.display = v ? '' : 'none'; el.textContent = v > 99 ? '99+' : v; } };
+  setBadge($('#unread-badge'), n);
+  setBadge($('#m-unread-badge'), n);
+  const nn = S.notifUnread || 0;
+  setBadge($('#notif-badge'), nn);
+  setBadge($('#m-notif-badge'), nn);
   const mc = $('#me-ctx');
   if (mc && S.me) { const c = CTX_META[S.me.context] || CTX_META.available; mc.innerHTML = `${icon(c[0], 12)} ${c[1]}`; }
 }
@@ -802,7 +895,7 @@ async function renderToday() {
   };
 
   $('#today').innerHTML = `
-    <div class="memory-sphere"><div class="orb"></div><div class="cap">your world is synced.</div></div>
+    <div class="memory-sphere"><canvas class="universe" id="universe" width="132" height="132" title="Search everything" aria-label="Open search"></canvas><div class="cap">your universe is synced.</div></div>
     <div class="hero-card">
       <div class="hero-greet">${greet}, <span class="grad-text">${esc(S.me.display_name.split(' ')[0].toLowerCase())}</span>.</div>
       <div class="hero-sub">here's what your people need from you — not your notifications.</div>
@@ -843,9 +936,9 @@ async function renderToday() {
         <div class="brief-item">${icon('star', 16, 'dim')}<div class="txt"><div class="t">${esc(m.body)}</div>${m.note ? `<div class="m">${esc(m.note)}</div>` : ''}</div></div>`).join('')}</div>` : ''}
     </div>`;
 
-  // The Pearl is the semantic-search portal — tap it to search everything.
-  const orb = $('#today .memory-sphere .orb');
-  if (orb) { orb.title = 'Search everything'; orb.onclick = () => togglePalette(true); }
+  // The universe is the semantic-search portal — tap it to search everything.
+  const uni = $('#universe');
+  if (uni) { startUniverse(uni); uni.onclick = () => togglePalette(true); }
   $('#today').querySelectorAll('[data-chat]').forEach(el => el.onclick = () => go('/chat/' + el.dataset.chat));
   $('#today').querySelectorAll('[data-space]').forEach(el => el.onclick = () => go('/space/' + el.dataset.space));
   $('#today').querySelectorAll('[data-life]').forEach(el => el.onclick = () => { S.lifeRoom = el.dataset.life; go('/life'); });

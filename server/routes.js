@@ -11,7 +11,7 @@ import { summarizeConversation, ollamaModel } from './ai.js';
 import { worlds as worldsRouter } from './worlds.js';
 import { vibes as vibesRouter, syncMood, sweepMoodRooms } from './vibes.js';
 import { chaos as chaosRouter } from './chaos.js';
-import { GOOGLE_CLIENT_ID, verifyGoogleToken, userForGoogle } from './google.js';
+import { GOOGLE_CLIENT_ID, verifyGoogleToken, verifyGoogleAccessToken, userForGoogle } from './google.js';
 import { normalizeAvatar } from '../public/js/avatar.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_ENABLED, verifySupabaseToken, userForSupabase } from './supabase.js';
 import { mirror } from './cloud.js';
@@ -76,7 +76,10 @@ api.get('/auth/config', (_req, res) => res.json({
 
 api.post('/auth/google', async (req, res) => {
   try {
-    const payload = await verifyGoogleToken(req.body?.credential);
+    // Two supported flows: custom-button OAuth2 (accessToken) or GSI ID token (credential)
+    const payload = req.body?.accessToken
+      ? await verifyGoogleAccessToken(req.body.accessToken)
+      : await verifyGoogleToken(req.body?.credential);
     const user = userForGoogle(payload);
     res.json({ token: issueSession(res, user), user: publicUser(user) });
   } catch (e) { res.status(e.status || 500).json({ error: e.message }); }

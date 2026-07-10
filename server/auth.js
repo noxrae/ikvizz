@@ -36,23 +36,53 @@ export function normalizePhone(raw) {
   return /^\+?\d{7,15}$/.test(p) ? p : null;
 }
 
-export function createUser({ username, password, displayName, phone }) {
-  const uname = String(username || '').trim().toLowerCase();
-  if (!/^[a-z0-9_]{3,24}$/.test(uname)) throw httpErr(400, 'Username must be 3–24 chars: letters, numbers, underscore.');
-  if (String(password || '').length < 6) throw httpErr(400, 'Password must be at least 6 characters.');
-  const exists = db.prepare(`SELECT id FROM users WHERE username=?`).get(uname);
-  if (exists) throw httpErr(409, 'That username is taken.');
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+/** Build a unique, valid username from an email's local-part (or any seed). */
+function uniqueUsernameFrom(seed) {
+  let base = String(seed || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+  if (base.length < 3) base = (base + 'user').slice(0, 20);
+  let candidate = base, n = 1;
+  while (db.prepare(`SELECT id FROM users WHERE username=?`).get(candidate)) {
+    candidate = (base.slice(0, 20) + n).slice(0, 24); n++;
+  }
+  return candidate;
+}
+
+export function createUser({ username, email, password, displayName, phone }) {
+  const rawId = String(username || '').trim();
+  const pw = String(password || '');
+  if (!rawId) throw httpErr(400, 'Enter a username or email to continue.');
+  if (pw.length < 6) throw httpErr(400, `Password needs at least 6 characters — you entered ${pw.length}.`);
+
+  let uname;
+  let mail = email ? String(email).trim().toLowerCase() : null;
+
+  if (rawId.includes('@')) {
+    // Signing up with an email address (e.g. a Gmail) — accepted.
+    mail = rawId.toLowerCase();
+    if (!EMAIL_RE.test(mail)) throw httpErr(400, 'That email address doesn’t look right — check for typos (it should look like you@gmail.com).');
+    if (db.prepare(`SELECT id FROM users WHERE email=?`).get(mail)) throw httpErr(409, 'That email already has an account — sign in instead.');
+    uname = uniqueUsernameFrom(mail.split('@')[0]); // auto-picked, always unique
+  } else {
+    uname = rawId.toLowerCase();
+    if (uname.length < 3 || uname.length > 24) throw httpErr(400, `Username must be 3–24 characters — yours is ${uname.length}.`);
+    if (!/^[a-z0-9_]+$/.test(uname)) throw httpErr(400, 'Username can only use letters, numbers and underscore — no spaces, dots or @. (To use your email instead, just type the full email.)');
+    if (db.prepare(`SELECT id FROM users WHERE username=?`).get(uname)) throw httpErr(409, `The username “${uname}” is already taken — please pick another.`);
+    if (mail && EMAIL_RE.test(mail) && db.prepare(`SELECT id FROM users WHERE email=?`).get(mail)) throw httpErr(409, 'That email already has an account — sign in instead.');
+  }
+
   // Phone is OPTIONAL — an Instagram-style username identity with a
   // WhatsApp-style discovery handle on top. No SMS gatekeeping.
   let ph = null;
   if (phone && String(phone).trim()) {
     ph = normalizePhone(phone);
-    if (!ph) throw httpErr(400, 'That phone number does not look right.');
+    if (!ph) throw httpErr(400, 'That phone number doesn’t look right — use digits only, optionally starting with a + and country code.');
     if (db.prepare(`SELECT id FROM users WHERE phone=?`).get(ph)) throw httpErr(409, 'That phone number is already connected to an account.');
   }
   const hue = Math.abs([...uname].reduce((h, c) => h * 31 + c.charCodeAt(0), 7)) % 360;
-  const r = db.prepare(`INSERT INTO users (username, password_hash, display_name, avatar_hue, created_at, phone) VALUES (?,?,?,?,?,?)`)
-    .run(uname, bcrypt.hashSync(password, 10), displayName?.trim() || uname, hue, now(), ph);
+  const r = db.prepare(`INSERT INTO users (username, password_hash, display_name, avatar_hue, created_at, phone, email) VALUES (?,?,?,?,?,?,?)`)
+    .run(uname, bcrypt.hashSync(pw, 10), displayName?.trim() || uname, hue, now(), ph, mail);
   const userId = Number(r.lastInsertRowid);
   // Every human starts with two identities — the seed of Dynamic Identity.
   // (emoji column carries IKVIZZ icon names — the client renders our own icons)
