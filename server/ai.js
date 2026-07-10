@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — AI layer. Local-first, honestly labeled.
+// IKVIZZ — AI layer. Local-first, honestly labeled.
 //
 // If Ollama (http://localhost:11434) is running, summaries use a real local
 // LLM — the response says which model. If not, we fall back to a transparent

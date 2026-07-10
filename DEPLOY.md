@@ -1,4 +1,4 @@
-# Deploying Ikvizz (free) — get a public URL
+# Deploying IKVIZZ (free) — get a public URL
 
 This gives you a live, installable `https://…` URL your users can open on any
 phone/laptop, at **$0**. Takes ~5–10 minutes. Everything the host needs is

@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Avatar creator engine (Snapchat/Bitmoji-style, layered SVG).
+// IKVIZZ — Avatar creator engine (Snapchat/Bitmoji-style, layered SVG).
 //
 // Pure, DOM-free string building so the SAME code renders an avatar in the
 // browser (the creator + everywhere avatars show) AND on the server (which

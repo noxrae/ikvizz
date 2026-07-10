@@ -1,5 +1,5 @@
 /* ============================================================================
-   Ikvizz icon system — hand-drawn, stroke-based, 24×24 grid.
+   IKVIZZ icon system — hand-drawn, stroke-based, 24×24 grid.
    One visual voice across the whole product: 1.8px strokes, round caps,
    currentColor. No OS emojis in the chrome — these are ours.
    ============================================================================ */
@@ -122,7 +122,7 @@ export const ICONS = {
 };
 
 /* ============================================================================
-   Ikvizz MOODS — our own emoji. Soft 3D-feel blobs with soul: radial-lit
+   IKVIZZ MOODS — our own emoji. Soft 3D-feel blobs with soul: radial-lit
    gradients, squishy silhouettes, hand-drawn faces. No OS emoji anywhere.
    ============================================================================ */
 const FACE = 'stroke="rgba(28,20,38,.82)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"';

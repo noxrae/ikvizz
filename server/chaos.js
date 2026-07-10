@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Chaos layer: Late Night Confession Train + Music Sync.
+// IKVIZZ — Chaos layer: Late Night Confession Train + Music Sync.
 // 100% free, local-first, zero external APIs (no Spotify, no paid anything).
 //
 // Confession Train: post anonymously; it rides a "train" to random people who

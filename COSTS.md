@@ -1,4 +1,4 @@
-# Ikvizz — Cost Sheet (resources & what they cost)
+# IKVIZZ — Cost Sheet (resources & what they cost)
 
 > **Rule reminder:** nothing here that costs money will ever be turned on without
 > asking you first. The default deploy below is **$0**. Everything in the "Paid"

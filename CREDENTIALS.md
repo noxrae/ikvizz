@@ -1,4 +1,4 @@
-# 🜁 Ikvizz — Demo Credentials
+# 🜁 IKVIZZ — Demo Credentials
 
 App URL: **http://localhost:4321**
 
@@ -24,5 +24,5 @@ All demo accounts use the same password: **`aether123`**
 > **locally** (username, not email) and keep working with Supabase enabled.
 > Real accounts: click **"Create an account"** — with Supabase configured this
 > registers through Supabase Auth (email + confirmation link), then signing in
-> with that email enters Ikvizz.
+> with that email enters IKVIZZ.
 > To reset the whole demo world: stop the server, delete `data/aether.db*`, run `npm run seed`.

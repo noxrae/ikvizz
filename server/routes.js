@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — REST API. Everything the SPA needs; sockets handle live events.
+// IKVIZZ — REST API. Everything the SPA needs; sockets handle live events.
 // ============================================================================
 import { Router } from 'express';
 import { db, now, getOrCreateDm, userCanAccessConversation, ftsIndex, ftsQuery } from './db.js';
@@ -83,7 +83,7 @@ api.post('/auth/google', async (req, res) => {
 });
 
 // Supabase Auth (Milestone 3): the client signs in against Supabase directly,
-// then exchanges the Supabase access token for a local Ikvizz session here.
+// then exchanges the Supabase access token for a local IKVIZZ session here.
 api.post('/auth/supabase', async (req, res) => {
   try {
     const payload = await verifySupabaseToken(req.body?.accessToken);
@@ -147,7 +147,7 @@ api.patch('/me/avatar', wrap((req, res) => {
   res.json({ user: publicUser(me(req)) });
 }));
 
-// Mood Canvas: your current Ikvizz mood blob (public expression, unlike context)
+// Mood Canvas: your current IKVIZZ mood blob (public expression, unlike context)
 api.patch('/me/mood', wrap((req, res) => {
   const mood = req.body?.mood;
   if (mood !== null && mood !== '' && !MOOD_TAGS.includes(mood)) throw httpErr(400, 'Unknown mood.');
@@ -223,7 +223,7 @@ api.post('/people', wrap((req, res) => {
     ? db.prepare(`SELECT * FROM users WHERE phone=?`).get(phone)
     : db.prepare(`SELECT * FROM users WHERE username=?`).get(handle);
   if (!other) throw httpErr(404, phone ? 'No one with that number here yet — send them your invite link.' : 'No one with that username yet.');
-  if (other.id === req.userId) throw httpErr(400, 'That is you. Ikvizz already remembers you.');
+  if (other.id === req.userId) throw httpErr(400, 'That is you. IKVIZZ already remembers you.');
   const existing = db.prepare(`SELECT id FROM relationships WHERE user_id=? AND other_id=?`).get(req.userId, other.id);
   if (existing) throw httpErr(409, 'Already in your relationship graph.');
   db.prepare(`INSERT INTO relationships (user_id, other_id, kind, closeness, created_at) VALUES (?,?,?,?,?)`)
@@ -252,7 +252,7 @@ api.patch('/people/:relId', wrap((req, res) => {
 }));
 
 // ------------------------------------------------------------ moments -----
-// Stories, the Ikvizz way: 24 hours, scoped (everyone / inner circle), then gone.
+// Stories, the IKVIZZ way: 24 hours, scoped (everyone / inner circle), then gone.
 const STORY_TTL = 24 * 3600_000;
 
 api.get('/stories', wrap((req, res) => {
@@ -837,7 +837,7 @@ api.delete('/spaces/:id/members/:userId', wrap((req, res) => {
 }));
 
 // -------------------------------------------------- export my universe -----
-// Data ownership, for real: everything Ikvizz knows about you, one JSON.
+// Data ownership, for real: everything IKVIZZ knows about you, one JSON.
 api.get('/export', wrap((req, res) => {
   const uid = req.userId;
   const myDmConvos = db.prepare(`SELECT id FROM conversations WHERE kind='dm' AND (a_id=? OR b_id=?)`).all(uid, uid).map(c => c.id);
@@ -855,7 +855,7 @@ api.get('/export', wrap((req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename="aether-universe.json"');
   res.json({
     exported_at: new Date().toISOString(),
-    note: 'Your entire Ikvizz universe. It was always yours — this just makes it portable.',
+    note: 'Your entire IKVIZZ universe. It was always yours — this just makes it portable.',
     user,
     personas: db.prepare(`SELECT * FROM personas WHERE user_id=?`).all(uid),
     relationships: db.prepare(`SELECT r.*, u.username AS other_username, u.display_name AS other_name FROM relationships r JOIN users u ON u.id=r.other_id WHERE r.user_id=?`).all(uid),

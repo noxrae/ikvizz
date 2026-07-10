@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Auth (JWT, local). No third-party identity provider for the MVP;
+// IKVIZZ — Auth (JWT, local). No third-party identity provider for the MVP;
 // Keycloak/Supabase can replace this module behind the same middleware seam.
 // ============================================================================
 import jwt from 'jsonwebtoken';
@@ -55,7 +55,7 @@ export function createUser({ username, password, displayName, phone }) {
     .run(uname, bcrypt.hashSync(password, 10), displayName?.trim() || uname, hue, now(), ph);
   const userId = Number(r.lastInsertRowid);
   // Every human starts with two identities — the seed of Dynamic Identity.
-  // (emoji column carries Ikvizz icon names — the client renders our own icons)
+  // (emoji column carries IKVIZZ icon names — the client renders our own icons)
   const p = db.prepare(`INSERT INTO personas (user_id, name, emoji, bio, created_at) VALUES (?,?,?,?,?)`);
   p.run(userId, 'Personal', 'smile', '', now());
   p.run(userId, 'Professional', 'briefcase', '', now());
@@ -116,7 +116,7 @@ export function uidFromCookie(req) {
   try { return jwt.verify(decodeURIComponent(m.slice(SESSION_COOKIE.length + 1)), JWT_SECRET).uid; }
   catch { return null; }
 }
-/** Express gate for /files — only signed-in Ikvizz users may fetch uploads. */
+/** Express gate for /files — only signed-in IKVIZZ users may fetch uploads. */
 export function fileGate(req, res, next) {
   if (uidFromCookie(req)) return next();
   res.status(403).type('text/plain').send('Sign in to view this file.');

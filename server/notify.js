@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Notification center (Phase 9).
+// IKVIZZ — Notification center (Phase 9).
 //
 // Priority Streams still decide what INTERRUPTS; this is the quiet, honest
 // record of things addressed at you: mentions, reactions, missed calls, new

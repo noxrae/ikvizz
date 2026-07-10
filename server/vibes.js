@@ -1,8 +1,8 @@
 // ============================================================================
-// Ikvizz — The vibes layer: MoodSync Rooms, Roast My Life, Memory Vibe
+// IKVIZZ — The vibes layer: MoodSync Rooms, Roast My Life, Memory Vibe
 // Replay, Rizz Battle. All local-first, all free-tier, zero new dependencies.
 //
-// MoodSync Rooms: set your mood blob and Ikvizz quietly groups you with
+// MoodSync Rooms: set your mood blob and IKVIZZ quietly groups you with
 // everyone else feeling the same thing — a temporary Living Space with a name
 // like "Delulu Hours" or "Late Night Sad Bois". Six hours later the room
 // dissolves and each member keeps a memory capsule instead of a chat backlog.
@@ -320,7 +320,7 @@ vibes.get('/people/:otherId/replay', wrap((req, res) => {
   for (const m of topMoments) slides.push({ kind: 'moment', label: 'a certified moment', from: name(m.sender_id), body: m.body.slice(0, 140), at: m.created_at, reactions: m.n });
   if (topWord) slides.push({ kind: 'stat', big: `“${topWord}”`, label: 'your word of the era', sub: `peak chaos hour: ${peakHour}:00` });
   if (memories) slides.push({ kind: 'stat', big: String(memories), label: 'memories saved forever', sub: 'the brain keeps receipts' });
-  slides.push({ kind: 'outro', title: 'the vibes were real', sub: 'Ikvizz · Memory Vibe Replay' });
+  slides.push({ kind: 'outro', title: 'the vibes were real', sub: 'IKVIZZ · Memory Vibe Replay' });
 
   res.json({ name: other.display_name, myName: me.display_name, slides, total: msgs.length, streak, vibeStreak: vibe, topWord });
 }));

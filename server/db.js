@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Database layer (local-first, single file, zero external services)
+// IKVIZZ — Database layer (local-first, single file, zero external services)
 // Uses Node's built-in SQLite driver (node:sqlite). The entire life of a user
 // lives in one encrypted-at-rest-capable file they own. Swap for Postgres at
 // scale — every query goes through this module, so the seam is clean.
@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS timeline_events (
   created_at INTEGER NOT NULL
 );
 
--- ========================== Ikvizz EDU ======================================
+-- ========================== IKVIZZ EDU ======================================
 -- Knowledge Universe: concepts are planets. Mastery = brightness, and it
 -- decays over time — dimming planets tell you what to review.
 CREATE TABLE IF NOT EXISTS concepts (
@@ -176,7 +176,7 @@ CREATE TABLE IF NOT EXISTS study_log (
   created_at INTEGER NOT NULL
 );
 
--- ========================== Ikvizz LIFE =====================================
+-- ========================== IKVIZZ LIFE =====================================
 -- Digital Home: rooms of your life, each alive with items and due dates.
 CREATE TABLE IF NOT EXISTS life_items (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -217,7 +217,7 @@ const MIGRATIONS = [
   `ALTER TABLE messages ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,// soft delete
   `ALTER TABLE messages ADD COLUMN unlock_at INTEGER`,                 // Time Capsules: hidden until this moment
   `ALTER TABLE users ADD COLUMN phone TEXT`,                           // optional discovery handle (WhatsApp-style)
-  `ALTER TABLE users ADD COLUMN mood TEXT`,                            // Mood Canvas: your current Ikvizz mood blob
+  `ALTER TABLE users ADD COLUMN mood TEXT`,                            // Mood Canvas: your current IKVIZZ mood blob
   `ALTER TABLE users ADD COLUMN email TEXT`,                           // set by Google sign-in
   `ALTER TABLE users ADD COLUMN google_sub TEXT`,                      // Google account id (subject)
   `ALTER TABLE users ADD COLUMN avatar_url TEXT`,                      // profile photo (local upload or Google picture)
@@ -314,7 +314,7 @@ CREATE TABLE IF NOT EXISTS push_subs (
   created_at INTEGER NOT NULL
 );`);
 
-// Ikvizz EDU: assignments (deadlines feed the Daily Briefing) + flash cards
+// IKVIZZ EDU: assignments (deadlines feed the Daily Briefing) + flash cards
 // (spaced recall that reuses the same honest mastery machinery)
 db.exec(`
 CREATE TABLE IF NOT EXISTS assignments (
@@ -338,7 +338,7 @@ CREATE TABLE IF NOT EXISTS flashcards (
   created_at INTEGER NOT NULL
 );`);
 
-// Ikvizz LIFE: goals — long arcs with honest progress, not just todo items
+// IKVIZZ LIFE: goals — long arcs with honest progress, not just todo items
 db.exec(`
 CREATE TABLE IF NOT EXISTS goals (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -406,7 +406,7 @@ CREATE TABLE IF NOT EXISTS rizz_battles (
   judged_at       INTEGER
 );`);
 
-// Reactions: expression through the Ikvizz icon language (heart, flame, bulb…)
+// Reactions: expression through the IKVIZZ icon language (heart, flame, bulb…)
 db.exec(`
 CREATE TABLE IF NOT EXISTS reactions (
   message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,

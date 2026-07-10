@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Demo world seeder. Run once:  npm run seed
+// IKVIZZ — Demo world seeder. Run once:  npm run seed
 // Creates a small living universe so the product philosophy is visible the
 // moment you sign in — promises, ideas, contexts, a startup space, memories.
 //
@@ -166,12 +166,12 @@ spaceSay(maya, 'Interview #7 done. She said: "I chase payments more than I desig
 spaceSay(rahul, 'What if the invoice reminder sounds like the freelancer, not a robot? Tone-matched nudges.', 2 * DAY - 2 * HOUR);
 spaceSay(aarav, 'Logging that as an idea. Let’s decide the name this week — deadline is Friday.', DAY);
 
-// ============================================================ Ikvizz EDU ----
+// ============================================================ IKVIZZ EDU ----
 // Aarav's knowledge universe: the AI chain + a deliberate gap (weak Limits
 // under strong Calculus) so the Gap Detector fires on first login.
 const concept = db.prepare(`INSERT INTO concepts (user_id, name, emoji, notes, mastery, last_studied, created_at) VALUES (?,?,?,?,?,?,?)`);
 const cIds = {};
-const CONCEPTS = [ // emoji column carries Ikvizz icon names
+const CONCEPTS = [ // emoji column carries IKVIZZ icon names
   ['Artificial Intelligence', 'cpu', 'The umbrella field.', 88, 2],
   ['Machine Learning', 'chart', 'Learning from data.', 76, 4],
   ['Neural Networks', 'network', 'Layers, weights, backprop.', 58, 9],
@@ -199,7 +199,7 @@ const CHAINS = [ // [prerequisite, dependent] — you must know the first to lea
 ];
 for (const [from, to] of CHAINS) link.run(aarav.id, cIds[from], cIds[to]);
 
-// =========================================================== Ikvizz LIFE ----
+// =========================================================== IKVIZZ LIFE ----
 const lifeItem = db.prepare(`INSERT INTO life_items (user_id, room, title, body, due_at, status, created_at) VALUES (?,?,?,?,?,?,?)`);
 const LIFE = [ // [room, title, body, dueInHours|null, status]
   ['kitchen', 'Buy vegetables & milk', 'Tomatoes, spinach, 2L milk', 20, 'open'],

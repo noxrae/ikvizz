@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Core domain actions shared by the REST API and the socket layer.
+// IKVIZZ — Core domain actions shared by the REST API and the socket layer.
 // Sending a message is not "insert a row": the brain classifies it, extracts
 // signals (promises, ideas, decisions), grows the timeline, and feeds memory.
 // ============================================================================
@@ -13,7 +13,7 @@ export function getRelationship(userId, otherId) {
 }
 
 export const MOOD_TAGS = ['joy', 'love', 'hyped', 'jk', 'unsure', 'serious', 'down', 'blown', 'skull', 'heartbreak', 'cry',
-  // Ikvizz Vibes — proprietary ceramic emoji
+  // IKVIZZ Vibes — proprietary ceramic emoji
   'groan', 'chrome', 'vibepass', 'braincell', 'overthink', 'tea'];
 
 export function sendMessage({ conversationId, senderId, body, replyTo = null, kind = 'text', attachment = null, effect = null, silent = false, unlockAt = null, mood = null, forwarded = false, pollOptions = null, location = null, viewOnce = false }) {
@@ -150,7 +150,7 @@ export function rowToMessage(row) {
   return { ...row, signals: JSON.parse(row.signals || '[]'), attachment: row.attachment ? JSON.parse(row.attachment) : null };
 }
 
-// Legacy icon reactions + the Ikvizz mood blobs
+// Legacy icon reactions + the IKVIZZ mood blobs
 const REACTION_KINDS = ['heart', 'flame', 'check', 'bulb', 'smile', 'star', ...MOOD_TAGS];
 
 /** Aggregate reactions for a set of message ids → { [id]: [{kind, count, mine}] } */

@@ -1,4 +1,4 @@
-/* Ikvizz service worker — Web Push delivery (Phase 9) + install support.
+/* IKVIZZ service worker — Web Push delivery (Phase 9) + install support.
    The payload arrives already decrypted by the browser (RFC 8291);
    we just show it and focus the app on click. No Apple/APNs here. */
 
@@ -20,7 +20,7 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   let data = {};
   try { data = event.data?.json() || {}; } catch { /* opaque push */ }
-  event.waitUntil(self.registration.showNotification(data.title || 'Ikvizz', {
+  event.waitUntil(self.registration.showNotification(data.title || 'IKVIZZ', {
     body: data.body || '',
     tag: 'aether-' + (data.kind || 'note'),
     data: data.data || {},

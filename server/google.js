@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Sign in with Google (zero extra dependencies).
+// IKVIZZ — Sign in with Google (zero extra dependencies).
 //
 // Client uses Google Identity Services to obtain an ID token; we verify it
 // here properly: fetch Google's JWKS, check the RS256 signature with node
@@ -49,7 +49,7 @@ export async function verifyGoogleToken(credential) {
   return payload;
 }
 
-/** Find-or-create the Ikvizz account behind a verified Google payload. */
+/** Find-or-create the IKVIZZ account behind a verified Google payload. */
 export function userForGoogle(payload) {
   // 1) already linked by Google id
   let user = db.prepare(`SELECT * FROM users WHERE google_sub=?`).get(payload.sub);

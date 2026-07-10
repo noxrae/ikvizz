@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Ikvizz design system — calm, focused, relationship-first.
+   IKVIZZ design system — calm, focused, relationship-first.
    Dark by default (deep space), honest light mode, zero framework.
    ========================================================================== */
 :root {
@@ -675,7 +675,7 @@ kbd {
 .ws:hover { background: var(--bg-hover); color: var(--text-dim); }
 .ws.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); box-shadow: 0 0 14px rgba(124, 140, 255, .18); }
 
-/* ---------- Ikvizz EDU ------------------------------------------------------------- */
+/* ---------- IKVIZZ EDU ------------------------------------------------------------- */
 .edu-svg { width: 100%; height: 500px; display: block; }
 .planet { cursor: pointer; }
 .planet .p-name { fill: var(--text); font-size: 12px; font-weight: 700; }
@@ -684,7 +684,7 @@ kbd {
 .edu-link { stroke: var(--line); stroke-width: 1.3; stroke-dasharray: 3 4; }
 .gap-card { border-color: var(--important); background: var(--important-soft); }
 
-/* ---------- Ikvizz LIFE ------------------------------------------------------------- */
+/* ---------- IKVIZZ LIFE ------------------------------------------------------------- */
 .house { margin-top: 4px; }
 .house .roof { text-align: center; font-size: 30px; color: var(--text-faint); line-height: 1; }
 .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
@@ -700,7 +700,7 @@ kbd {
 .room:hover { transform: translateY(-2px); border-color: var(--accent); }
 .room.active { border-color: var(--accent); background: var(--accent-soft); }
 
-/* ---------- Ikvizz HORIZON ------------------------------------------------------------ */
+/* ---------- IKVIZZ HORIZON ------------------------------------------------------------ */
 .horizon-wrap {
   flex: 1; min-height: 0; position: relative; overflow: hidden;
   background:
@@ -802,7 +802,7 @@ kbd {
 .fab:hover { transform: scale(1.08) rotate(90deg); box-shadow: 0 10px 32px rgba(124, 92, 246, .6); }
 .fab:active { transform: scale(.92); }
 
-/* ---------- Ikvizz moods: our own emoji --------------------------------------------- */
+/* ---------- IKVIZZ moods: our own emoji --------------------------------------------- */
 .mood-ic .i { filter: drop-shadow(0 2px 3px rgba(10, 8, 20, .28)); }
 .mood-pop {
   position: absolute; bottom: 72px; left: 16px; z-index: 30;
@@ -1471,7 +1471,7 @@ kbd {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   DIGITAL COZY — warm clay, cream, frosted glass, pearl. Ikvizz's signature
+   DIGITAL COZY — warm clay, cream, frosted glass, pearl. IKVIZZ's signature
    skin. Applied via :root[data-skin="cozy"] (default). Old themes untouched.
    ════════════════════════════════════════════════════════════════════════════ */
 :root[data-skin="cozy"] {

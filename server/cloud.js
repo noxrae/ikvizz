@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Cloud Messaging mirror (Milestone 4: Core Messaging → Supabase).
+// IKVIZZ — Cloud Messaging mirror (Milestone 4: Core Messaging → Supabase).
 //
 // Local-first stays true: SQLite remains the source of truth and the app
 // never waits on the network. Every core-messaging write (chats, messages,
@@ -436,11 +436,11 @@ export async function flushOnce() {
 let interval = null;
 export function startCloud() {
   if (!CLOUD_ENABLED) {
-    console.log('  Ikvizz Cloud: off (set SUPABASE_DB_URL to mirror core messaging to Supabase)');
+    console.log('  IKVIZZ Cloud: off (set SUPABASE_DB_URL to mirror core messaging to Supabase)');
     return;
   }
   const pending = db.prepare(`SELECT COUNT(*) AS c FROM cloud_outbox`).get().c;
-  console.log(`  Ikvizz Cloud: mirroring core messaging → Supabase${pending ? ` (${pending} queued)` : ''}`);
+  console.log(`  IKVIZZ Cloud: mirroring core messaging → Supabase${pending ? ` (${pending} queued)` : ''}`);
   interval ||= setInterval(flushOnce, 2000);
   interval.unref?.();
   kick();

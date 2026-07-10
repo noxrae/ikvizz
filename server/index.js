@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — entrypoint. Express serves the SPA + REST API; Socket.IO rides the
+// IKVIZZ — entrypoint. Express serves the SPA + REST API; Socket.IO rides the
 // same HTTP server. Local-first: one process, one SQLite file, no cloud.
 // ============================================================================
 import express from 'express';
@@ -42,7 +42,7 @@ createSocketLayer(server);
 server.listen(PORT, () => {
   console.log(`
   ─────────────────────────────────────────────
-   Ikvizz  ·  understanding, not messages
+   IKVIZZ  ·  understanding, not messages
    http://localhost:${PORT}
   ─────────────────────────────────────────────`);
   startCloud(); // Milestone 4: mirror core messaging → Supabase (no-op if unconfigured)

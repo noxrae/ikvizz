@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz WORLDS — EDU · LIFE · HORIZON
+// IKVIZZ WORLDS — EDU · LIFE · HORIZON
 // One core intelligence (db + brain), three different presentations of it.
 // This module is the world-specific domain logic; the SPA renders each world.
 // ============================================================================
@@ -17,7 +17,7 @@ const wrap = fn => (req, res) => {
 const DAY = 86_400_000;
 
 // ============================================================================
-// Ikvizz EDU — Knowledge Universe
+// IKVIZZ EDU — Knowledge Universe
 // ============================================================================
 
 /** Mastery decays exponentially (τ = 40 days). A planet you ignore dims. */
@@ -315,9 +315,9 @@ worlds.get('/edu/dna', wrap((req, res) => {
 }));
 
 // ============================================================================
-// Ikvizz LIFE — Digital Home
+// IKVIZZ LIFE — Digital Home
 // ============================================================================
-export const ROOMS = [ // `emoji` carries an Ikvizz icon name — the client renders our own icons
+export const ROOMS = [ // `emoji` carries an IKVIZZ icon name — the client renders our own icons
   { key: 'kitchen', label: 'Kitchen', emoji: 'pan',      hint: 'groceries & meals' },
   { key: 'bedroom', label: 'Bedroom', emoji: 'bed',      hint: 'sleep & rest' },
   { key: 'study',   label: 'Study',   emoji: 'book',     hint: 'learning & work' },
@@ -474,7 +474,7 @@ worlds.get('/life/insights', wrap((req, res) => {
 }));
 
 // ============================================================================
-// Ikvizz HORIZON — everything you know, as one navigable universe
+// IKVIZZ HORIZON — everything you know, as one navigable universe
 // ============================================================================
 worlds.get('/horizon', wrap((req, res) => {
   const uid = req.userId;

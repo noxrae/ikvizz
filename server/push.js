@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Web Push, zero dependencies (Phase 9: Notifications).
+// IKVIZZ — Web Push, zero dependencies (Phase 9: Notifications).
 //
 // Real background push through the browser's push service (FCM for
 // Chrome/Edge, Mozilla autopush for Firefox — all free), implemented straight

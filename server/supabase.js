@@ -1,9 +1,9 @@
 // ============================================================================
-// Ikvizz — Supabase Auth (zero extra dependencies), Milestone 3.
+// IKVIZZ — Supabase Auth (zero extra dependencies), Milestone 3.
 //
-// Supabase is the identity provider; Ikvizz stays the app. The client talks
+// Supabase is the identity provider; IKVIZZ stays the app. The client talks
 // to Supabase's GoTrue REST API directly (sign-up / sign-in / confirmation
-// emails), obtains an access token, and exchanges it here for a local Ikvizz
+// emails), obtains an access token, and exchanges it here for a local IKVIZZ
 // session — exactly the same seam as Sign in with Google:
 //
 //    verify external token → find-or-create local user → issue local JWT
@@ -78,7 +78,7 @@ export async function verifySupabaseToken(token) {
   return payload;
 }
 
-/** Find-or-create the Ikvizz account behind a verified Supabase payload. */
+/** Find-or-create the IKVIZZ account behind a verified Supabase payload. */
 export function userForSupabase(payload) {
   // 1) already linked by Supabase id
   let user = db.prepare(`SELECT * FROM users WHERE supabase_id=?`).get(payload.sub);

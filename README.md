@@ -1,17 +1,17 @@
-# 🜁 Ikvizz
+# 🜁 IKVIZZ
 
 > **Communication should transfer understanding, not messages.**
 
-Ikvizz is not another chat app. It is **one core intelligence with four worlds**
-— a working MVP of the Project Ikvizz vision, running 100% locally on your machine.
+IKVIZZ is not another chat app. It is **one core intelligence with four worlds**
+— a working MVP of the Project IKVIZZ vision, running 100% locally on your machine.
 
 ```
-                        Ikvizz CORE
+                        IKVIZZ CORE
         (Memory · Relationships · Context · Brain · Search)
                              │
         ┌──────────┬─────────┼──────────────┐
         ▼          ▼         ▼              ▼
-   🜁 Ikvizz NOW  🎓 EDU   🏠 LIFE      🌠 HORIZON
+   🜁 IKVIZZ NOW  🎓 EDU   🏠 LIFE      🌠 HORIZON
    (universal)  (students) (everyone)  (spatial universe)
 ```
 
@@ -24,7 +24,7 @@ only the presentation changes.
 living galaxy of people, Living Spaces, memory — and a chat experience built
 for understanding:
 - **Replies** with quoted context (click a quote to jump back, with a glow)
-- **Reactions** in the Ikvizz icon language (heart, flame, check, bulb, smile, star)
+- **Reactions** in the IKVIZZ icon language (heart, flame, check, bulb, smile, star)
 - **Edit & remove** your messages — edits are honestly re-read by the brain
   (priority and promises stay truthful) and marked "edited"
 - **Voice notes** recorded in-app, stored locally like any attachment
@@ -141,7 +141,7 @@ server/
   sockets.js  presence, intent, live messages, reads, group-call rooms
   seed.js     demo world (relationships, space, knowledge universe, home)
 public/       hand-crafted SPA — no framework, no build step
-  js/icons.js custom Ikvizz icon system: ~60 hand-drawn stroke icons, no OS emojis
+  js/icons.js custom IKVIZZ icon system: ~60 hand-drawn stroke icons, no OS emojis
   sw.js       service worker: background push delivery + click-to-open
 tests/        live integration suites (145 checks: test · test:auth · test:cloud)
 data/         your entire universe in one file (never commit)
@@ -166,7 +166,7 @@ locked time capsules stay sealed even in the export.
 ## Sign in with Supabase (Milestone 3)
 
 Supabase is now the identity provider — email + password accounts live in
-`auth.users`, while Ikvizz stays local-first for everything else. The wiring
+`auth.users`, while IKVIZZ stays local-first for everything else. The wiring
 is the same seam Google uses, with zero new dependencies:
 
 1. Client speaks GoTrue's REST API directly (`/auth/v1/signup`,
@@ -178,7 +178,7 @@ is the same seam Google uses, with zero new dependencies:
    issuer / audience / expiry (`server/supabase.js`). Legacy HS256 projects
    fall back to asking GoTrue itself.
 3. A verified token is exchanged at `POST /api/auth/supabase` for a normal
-   local Ikvizz JWT — sockets, middleware, everything downstream unchanged.
+   local IKVIZZ JWT — sockets, middleware, everything downstream unchanged.
 
 Enable it in `.env` (the `NEXT_PUBLIC_*` spellings from the dashboard work too):
 
@@ -232,7 +232,7 @@ npm run test:cloud       # live end-to-end proof (20 checks against real Supabas
 ```
 
 Requires `SUPABASE_DB_URL` (+ `SUPABASE_SERVICE_KEY` for shadow identities
-and Storage) in `.env`. Without them the mirror is off and Ikvizz behaves
+and Storage) in `.env`. Without them the mirror is off and IKVIZZ behaves
 exactly as before.
 
 ## Sign in with Google
@@ -255,7 +255,7 @@ Until configured, the button explains exactly this — no fake flows.
 ### Design system
 The entire UI uses a single hand-drawn icon language (24×24 grid, 1.8px round
 strokes, `currentColor`) defined in `public/js/icons.js` — nothing depends on
-the OS emoji font, so Ikvizz looks identical and intentional on every machine.
+the OS emoji font, so IKVIZZ looks identical and intentional on every machine.
 User-created things (spaces, personas, concepts) choose from curated on-brand
 icon sets rather than free-form emoji.
 
@@ -301,7 +301,7 @@ the in-app center):
 - `ai.js` → already auto-detects Ollama for summaries; extend to briefings & search
 - `fts` table → swap for Qdrant/Chroma embeddings (Phase 2: semantic search)
 - `auth.js` → Supabase Auth now wired behind this seam (Milestone 3); Keycloak still possible for self-hosted deployments
-- `cloud.js` → core messaging mirrors to Supabase (Milestone 4); Milestone 5 (Ikvizz Intelligence: promises, memories, knowledge graph in the cloud + Supabase Realtime for multi-device) rides the same outbox
+- `cloud.js` → core messaging mirrors to Supabase (Milestone 4); Milestone 5 (IKVIZZ Intelligence: promises, memories, knowledge graph in the cloud + Supabase Realtime for multi-device) rides the same outbox
 - `signals` JSON column → grows into the Knowledge Graph
 
 ### E2E honesty notes (v0)

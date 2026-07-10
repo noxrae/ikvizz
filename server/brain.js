@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — The Brain (v0: transparent local heuristics)
+// IKVIZZ — The Brain (v0: transparent local heuristics)
 //
 // Honesty is a feature: everything here is deterministic, explainable and runs
 // 100% on the user's machine. Each function is a seam where an open-weight
@@ -117,14 +117,14 @@ export function buildBriefing(userId) {
     ORDER BY si.created_at ASC LIMIT 6
   `).all(userId);
 
-  // Ikvizz LIFE: things in your home that are due soon or overdue
+  // IKVIZZ LIFE: things in your home that are due soon or overdue
   const lifeDue = db.prepare(`
     SELECT * FROM life_items
     WHERE user_id = ? AND status = 'open' AND due_at IS NOT NULL AND due_at < ?
     ORDER BY due_at ASC LIMIT 6
   `).all(userId, nowTs + DAY);
 
-  // Ikvizz EDU: assignments landing within 48h (Phase 11)
+  // IKVIZZ EDU: assignments landing within 48h (Phase 11)
   const assignmentsDue = db.prepare(`
     SELECT a.*, c.name AS concept_name FROM assignments a
     LEFT JOIN concepts c ON c.id = a.concept_id
@@ -132,7 +132,7 @@ export function buildBriefing(userId) {
     ORDER BY a.due_at ASC LIMIT 5
   `).all(userId, nowTs + 2 * DAY);
 
-  // Ikvizz EDU: the dimmest planets — what your knowledge universe wants reviewed
+  // IKVIZZ EDU: the dimmest planets — what your knowledge universe wants reviewed
   const reviewConcepts = db.prepare(`SELECT * FROM concepts WHERE user_id = ?`).all(userId)
     .map(c => ({ ...c, effective: Math.round(Math.max(2, c.mastery * Math.exp(-Math.max(0, (nowTs - c.last_studied) / DAY) / 40))) }))
     .filter(c => c.effective < 45)

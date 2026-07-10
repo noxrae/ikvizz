@@ -1,5 +1,5 @@
 // ============================================================================
-// Ikvizz — Live layer (Socket.IO): presence, intent signals, messages, reads,
+// IKVIZZ — Live layer (Socket.IO): presence, intent signals, messages, reads,
 // context changes. The Intent Engine lives here: clients stream lightweight
 // editing telemetry; we broadcast a human word — thinking / writing / reflecting.
 // ============================================================================

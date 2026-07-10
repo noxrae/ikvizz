@@ -1,5 +1,5 @@
 /* ============================================================================
-   Ikvizz — SPA. No framework: a hash router, a socket, and honest DOM.
+   IKVIZZ — SPA. No framework: a hash router, a socket, and honest DOM.
    Views: Today (briefing) · People (list + constellation map) · Chat ·
    Spaces · Space detail · Memory · Me. Ctrl+K = command palette.
    ============================================================================ */
@@ -24,7 +24,7 @@ const S = {
 // If the remembered world has since been disabled, land safely in NOW
 if (['edu', 'life'].includes(S.world)) { S.world = 'now'; localStorage.setItem('aether_world', 'now'); }
 
-const CTX_META = { // [icon-name, label] — rendered through the Ikvizz icon system
+const CTX_META = { // [icon-name, label] — rendered through the IKVIZZ icon system
   available: ['circleDot', 'Available'], working: ['briefcase', 'Working'], meeting: ['calendar', 'In a meeting'],
   deepwork: ['target', 'Locked in'], driving: ['car', 'Driving'], gym: ['dumbbell', 'At the gym'],
   sleeping: ['moon', 'Sleeping'], vacation: ['compass', 'On vacation'],
@@ -181,7 +181,7 @@ function signOut() {
 /* ---- Supabase Auth (Milestone 3) — the identity provider seam.
    We speak GoTrue's REST API directly (no SDK, no build step): sign-up and
    sign-in happen against Supabase, then the access token is exchanged at
-   /api/auth/supabase for a normal local Ikvizz session. */
+   /api/auth/supabase for a normal local IKVIZZ session. */
 let authCfgPromise = null;
 const authConfig = () => (authCfgPromise ??= api('/auth/config').catch(() => ({})));
 
@@ -202,7 +202,7 @@ async function supabaseAuth(cfg, path, body) {
   return data;
 }
 
-/** Exchange a Supabase access token for a local Ikvizz session and boot. */
+/** Exchange a Supabase access token for a local IKVIZZ session and boot. */
 async function enterWithSupabase(accessToken) {
   const data = await api('/auth/supabase', { body: { accessToken } });
   S.token = data.token;
@@ -218,7 +218,7 @@ async function renderAuth(mode = 'login') {
   <div class="auth-wrap">
     <div class="card auth-card">
       <div class="auth-logo">${icon('aether', 44, 'accent')}</div>
-      <h1>Ikvizz</h1>
+      <h1>IKVIZZ</h1>
       <p class="tagline">Communication should transfer understanding, not messages.</p>
       <form id="auth-form">
         ${isReg ? `<div class="field"><label>Your name</label><input class="input" name="displayName" placeholder="Aarav Sharma" /></div>` : ''}
@@ -235,7 +235,7 @@ async function renderAuth(mode = 'login') {
         Continue with Google
       </button>
       <div id="gsi-slot" style="display:flex;justify-content:center;margin-top:8px"></div>
-      <div class="auth-switch">${isReg ? 'Already here?' : 'New to Ikvizz?'} <a href="#" id="auth-switch">${isReg ? 'Sign in' : 'Create an account'}</a></div>
+      <div class="auth-switch">${isReg ? 'Already here?' : 'New to IKVIZZ?'} <a href="#" id="auth-switch">${isReg ? 'Sign in' : 'Create an account'}</a></div>
       <div class="demo-hint">${icon('sparkle', 14, 'accent')} Try the demo world: <code>aarav</code> / <code>aether123</code> (also: rahul, maya, amma, vikram)</div>
     </div>
   </div>`;
@@ -256,7 +256,7 @@ async function renderAuth(mode = 'login') {
     try {
       if (sb && isReg) {
         // Identity lives in Supabase; the username/name/phone travel as
-        // metadata and become the Ikvizz profile on first sign-in.
+        // metadata and become the IKVIZZ profile on first sign-in.
         const uname = String(f.get('username') || '').trim().toLowerCase();
         if (!/^[a-z0-9_]{3,24}$/.test(uname)) return err('Username must be 3–24 chars: letters, numbers, underscore.');
         const d = await supabaseAuth(sb, 'signup', {
@@ -573,9 +573,9 @@ function renderShell() {
   app().innerHTML = `
   <div class="shell">
     <nav class="rail">
-      <div class="logo">${icon('aether', 21, 'accent')}<b>Ikvizz</b></div>
+      <div class="logo">${icon('aether', 21, 'accent')}<b>IKVIZZ</b></div>
       <div class="world-switch" style="grid-template-columns:repeat(${Object.keys(WORLDS).filter(worldEnabled).length},1fr)">
-        ${Object.entries(WORLDS).filter(([k]) => worldEnabled(k)).map(([k, w]) => `<button class="ws ${k === S.world ? 'active' : ''}" data-world="${k}" title="Ikvizz ${w.label}">${icon(w.ic, 17)}<small>${w.label}</small></button>`).join('')}
+        ${Object.entries(WORLDS).filter(([k]) => worldEnabled(k)).map(([k, w]) => `<button class="ws ${k === S.world ? 'active' : ''}" data-world="${k}" title="IKVIZZ ${w.label}">${icon(w.ic, 17)}<small>${w.label}</small></button>`).join('')}
       </div>
       <button class="rail-search" id="rail-search" title="Search everything (Ctrl+K)">${icon('search', 15)}<span>Search…</span><kbd>⌘K</kbd></button>
       ${world.nav.map(([key, ico, lbl]) => `
@@ -618,7 +618,7 @@ async function renderAlerts() {
     ${!S.pushOn && Notification?.permission !== 'granted' ? `
       <div class="card" style="margin-bottom:14px;display:flex;gap:10px;align-items:center">
         ${icon('bell', 18, 'accent')}
-        <div style="flex:1">Get these even when Ikvizz is closed — real background push (Chrome, Edge, Firefox, Android).</div>
+        <div style="flex:1">Get these even when IKVIZZ is closed — real background push (Chrome, Edge, Firefox, Android).</div>
         <button class="btn small" id="push-on">Enable push</button>
       </div>` : ''}
     <div id="alert-list">
@@ -903,7 +903,7 @@ function renderPeople() {
 }
 
 /* ============================================================================
-   Moments — stories the Ikvizz way. 24 hours, scoped, then gone forever.
+   Moments — stories the IKVIZZ way. 24 hours, scoped, then gone forever.
    ============================================================================ */
 async function renderMoments() {
   const rail = $('#moments');
@@ -1166,7 +1166,7 @@ function showAddPerson(prefill = '') {
       </select>
       <button class="btn" id="np-add">Add to my universe</button>
     </div>
-    <div class="faint" style="margin-top:8px">The relationship type teaches Ikvizz how much their words should weigh.</div>
+    <div class="faint" style="margin-top:8px">The relationship type teaches IKVIZZ how much their words should weigh.</div>
   </div>`);
   $('#np-add').onclick = async () => {
     try {
@@ -1576,7 +1576,7 @@ function pollHtml(m) {
   </div>`;
 }
 
-// Reactions are Ikvizz moods now (legacy icon kinds still render fine)
+// Reactions are IKVIZZ moods now (legacy icon kinds still render fine)
 const REACT_SET = MOOD_KINDS;
 
 function reactionsHtml(m) {
@@ -2188,7 +2188,7 @@ function shareReplayPoster(d) {
   x.fillStyle = 'rgba(255,255,255,.75)'; x.font = '700 40px system-ui';
   x.fillText('the vibes were real', W / 2, H - 200);
   x.fillStyle = 'rgba(255,255,255,.4)'; x.font = '600 30px system-ui';
-  x.fillText('△ Ikvizz', W / 2, H - 120);
+  x.fillText('△ IKVIZZ', W / 2, H - 120);
   c.toBlob(async blob => {
     const file = new File([blob], 'vibe-replay.png', { type: 'image/png' });
     if (navigator.canShare?.({ files: [file] })) {
@@ -2371,7 +2371,7 @@ function wireComposer() {
   };
   $('#send-btn').onclick = send;
 
-  // Emotion Layer: tag the message with an Ikvizz mood — say how you mean it
+  // Emotion Layer: tag the message with an IKVIZZ mood — say how you mean it
   const moodBtn = $('#mood-btn');
   if (moodBtn) moodBtn.onclick = e => {
     e.stopPropagation();
@@ -2479,7 +2479,7 @@ function wireComposer() {
   const sealBtn = $('#seal-btn');
   if (sealBtn) sealBtn.onclick = () => {
     if (!S.privKey) return toast('Encryption keys not ready on this device yet.', true);
-    if (!S.chat.otherPub) return toast(`${esc(S.chat.other.display_name.split(' ')[0])} hasn't opened Ikvizz since encryption arrived — no key published yet.`, true);
+    if (!S.chat.otherPub) return toast(`${esc(S.chat.other.display_name.split(' ')[0])} hasn't opened IKVIZZ since encryption arrived — no key published yet.`, true);
     S.chat.sealMode = !S.chat.sealMode;
     sealBtn.innerHTML = icon(S.chat.sealMode ? 'lock' : 'unlock', 17);
     sealBtn.classList.toggle('on', S.chat.sealMode);
@@ -3676,7 +3676,7 @@ async function renderMemory() {
   if (S.view.name !== 'memory') return;
   $('#mem-page').innerHTML = `
     <h2>Memory</h2>
-    <div class="sub">Everything you asked Ikvizz to remember — forever, locally, yours.</div>
+    <div class="sub">Everything you asked IKVIZZ to remember — forever, locally, yours.</div>
     <div class="add-inline">
       <input class="input" id="mem-new" placeholder="Remember this forever…" />
       <button class="btn small" id="mem-add">${icon('star', 13)} Remember</button>
@@ -3768,7 +3768,7 @@ function renderMe() {
       <div class="ic-mark">${icon('download', 22, 'accent')}</div>
       <div style="flex:1;min-width:0">
         <b>Get the app</b>
-        <div class="faint">Install Ikvizz on your phone, tablet or laptop — full-screen, launches from your home screen, works like a native app. No app store, no cost.</div>
+        <div class="faint">Install IKVIZZ on your phone, tablet or laptop — full-screen, launches from your home screen, works like a native app. No app store, no cost.</div>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0">
         <button class="btn ghost" id="qr-btn" title="Show a QR code to open on a phone">${icon('share', 14)} QR</button>
@@ -3780,7 +3780,7 @@ function renderMe() {
       <div class="section-title" style="margin-top:0">Appearance & account</div>
       ${document.documentElement.dataset.skin === 'pearl' ? `
       <div class="section-title" style="margin-top:0">Accent</div>
-      <div class="faint" style="margin-bottom:14px">${icon('sparkle', 12, 'accent')} Ikvizz Luxe uses its signature champagne palette. Switch skin below to customise the accent.</div>` : `
+      <div class="faint" style="margin-bottom:14px">${icon('sparkle', 12, 'accent')} IKVIZZ Luxe uses its signature champagne palette. Switch skin below to customise the accent.</div>` : `
       <div class="section-title" style="margin-top:0">Accent — make it yours</div>
       <div style="display:flex;gap:7px;margin-bottom:14px">
         ${[['violet', '#7b8cff'], ['teal', '#2dd4bf'], ['pink', '#f472b6'], ['amber', '#fbbf24']].map(([k, c]) =>
@@ -3788,7 +3788,7 @@ function renderMe() {
       </div>`}
       <div class="section-title" style="margin-top:0">Skin — pick your world</div>
       <div class="skin-pick" style="margin-bottom:14px">
-        ${[['pearl', 'Ikvizz Luxe', 'champagne pearl · dark'], ['cozy', 'Digital Cozy', 'warm clay · cream'], ['off', 'Classic', 'deep space · neon']].map(([k, name, sub]) => {
+        ${[['pearl', 'IKVIZZ Luxe', 'champagne pearl · dark'], ['cozy', 'Digital Cozy', 'warm clay · cream'], ['off', 'Classic', 'deep space · neon']].map(([k, name, sub]) => {
           const cur = document.documentElement.dataset.skin || 'pearl';
           return `<button class="skin-opt ${cur === k ? 'sel' : ''}" data-skin-pick="${k}"><span class="sw sw-${k}"></span><span class="txt"><b>${name}</b><small>${sub}</small></span></button>`;
         }).join('')}
@@ -3898,7 +3898,7 @@ function renderMe() {
   const isStandalone = matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   if (installCard && isStandalone) {
     installCard.innerHTML = `<div class="ic-mark">${icon('check', 22, 'ok')}</div>
-      <div style="flex:1;min-width:0"><b>Installed</b><div class="faint">Ikvizz is on your home screen — you're using the full-screen app right now.</div></div>`;
+      <div style="flex:1;min-width:0"><b>Installed</b><div class="faint">IKVIZZ is on your home screen — you're using the full-screen app right now.</div></div>`;
   } else {
     $('#install-btn')?.addEventListener('click', promptInstall);
   }
@@ -3915,14 +3915,14 @@ function showInstallQR() {
   root.innerHTML = `
   <div class="palette-veil" id="qr-veil"><div class="palette" style="padding:22px;max-width:340px;text-align:center">
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;text-align:left">
-      <span class="ic-mark">${icon('share', 18, 'accent')}</span><b style="font-size:16px">Scan to open Ikvizz</b>
+      <span class="ic-mark">${icon('share', 18, 'accent')}</span><b style="font-size:16px">Scan to open IKVIZZ</b>
       <button class="btn ghost small" id="qr-x" style="margin-left:auto" aria-label="Close">${icon('x', 12)}</button>
     </div>
     <div class="qr-frame"><img src="${esc(qr)}" alt="QR code for ${esc(url)}" width="220" height="220"
       onerror="this.parentNode.innerHTML='<div class=\\'faint\\' style=\\'padding:24px\\'>Couldn\\'t load the QR image — use the link below.</div>'"></div>
     <div class="qr-url">${esc(url)}</div>
     <button class="btn ghost small" id="qr-copy" style="margin-top:10px">${icon('copy', 13)} Copy link</button>
-    ${isLocal ? `<div class="faint" style="margin-top:12px">This is your local address — only works on this computer. After you deploy (Render), reopen this and the QR will point to your public URL that anyone can scan.</div>` : `<div class="faint" style="margin-top:12px">Point a phone camera at this to open Ikvizz, then use <b>Install</b> / Add to Home Screen.</div>`}
+    ${isLocal ? `<div class="faint" style="margin-top:12px">This is your local address — only works on this computer. After you deploy (Render), reopen this and the QR will point to your public URL that anyone can scan.</div>` : `<div class="faint" style="margin-top:12px">Point a phone camera at this to open IKVIZZ, then use <b>Install</b> / Add to Home Screen.</div>`}
   </div></div>`;
   $('#qr-x').onclick = close;
   $('#qr-veil').onmousedown = e => { if (e.target.id === 'qr-veil') close(); };
@@ -3939,7 +3939,7 @@ async function promptInstall() {
     bip.prompt();
     const choice = await bip.userChoice.catch(() => null);
     window.__bip = null;
-    if (choice?.outcome === 'accepted') toast(`${icon('check', 14, 'ok')} Adding Ikvizz to your home screen…`);
+    if (choice?.outcome === 'accepted') toast(`${icon('check', 14, 'ok')} Adding IKVIZZ to your home screen…`);
     else showInstallHelp();
     return;
   }
@@ -3952,16 +3952,16 @@ function showInstallHelp() {
   const isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
   const isAndroid = /android/i.test(ua);
   const steps = isIOS
-    ? [`Tap the <b>Share</b> button ${icon('share', 13)} in Safari's toolbar`, 'Scroll down and tap <b>Add to Home Screen</b>', 'Tap <b>Add</b> — Ikvizz lands on your home screen']
+    ? [`Tap the <b>Share</b> button ${icon('share', 13)} in Safari's toolbar`, 'Scroll down and tap <b>Add to Home Screen</b>', 'Tap <b>Add</b> — IKVIZZ lands on your home screen']
     : isAndroid
-      ? ['Open the browser menu <b>⋮</b> (top-right)', 'Tap <b>Install app</b> / <b>Add to Home screen</b>', 'Confirm — Ikvizz installs like a native app']
-      : ['Click the <b>install</b> icon in your browser\'s address bar', 'Or open the browser menu and choose <b>Install Ikvizz</b>', 'It opens in its own window, like a desktop app'];
+      ? ['Open the browser menu <b>⋮</b> (top-right)', 'Tap <b>Install app</b> / <b>Add to Home screen</b>', 'Confirm — IKVIZZ installs like a native app']
+      : ['Click the <b>install</b> icon in your browser\'s address bar', 'Or open the browser menu and choose <b>Install IKVIZZ</b>', 'It opens in its own window, like a desktop app'];
   const root = $('#palette-root');
   const close = () => { root.innerHTML = ''; };
   root.innerHTML = `
   <div class="palette-veil" id="inst-veil"><div class="palette" style="padding:20px 22px;max-width:400px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-      <span class="ic-mark">${icon('download', 18, 'accent')}</span><b style="font-size:16px">Install Ikvizz</b>
+      <span class="ic-mark">${icon('download', 18, 'accent')}</span><b style="font-size:16px">Install IKVIZZ</b>
       <button class="btn ghost small" id="inst-x" style="margin-left:auto" aria-label="Close">${icon('x', 12)}</button>
     </div>
     <div class="faint" style="margin-bottom:14px">${isIOS ? 'On iPhone & iPad' : isAndroid ? 'On Android' : 'On your computer'} — add it in three quick steps:</div>
@@ -3972,7 +3972,7 @@ function showInstallHelp() {
 }
 
 // ============================================================================
-// Ikvizz EDU — the Knowledge Universe. Concepts are planets: mastery is
+// IKVIZZ EDU — the Knowledge Universe. Concepts are planets: mastery is
 // brightness, neglect makes them dim, prerequisites orbit as connections.
 // ============================================================================
 async function renderEdu() {
@@ -4314,7 +4314,7 @@ async function startExam() {
 }
 
 // ============================================================================
-// Ikvizz LIFE — the Digital Home. Rooms of your life; the Garden grows habits.
+// IKVIZZ LIFE — the Digital Home. Rooms of your life; the Garden grows habits.
 // ============================================================================
 const PLANT_STAGES = [[0, 'seed'], [1, 'sprout'], [7, 'plant'], [14, 'tree']];
 const plantFor = streak => PLANT_STAGES.reduce((p, [min, ic]) => streak >= min ? ic : p, 'seed');
@@ -4489,7 +4489,7 @@ async function renderLife() {
 }
 
 // ============================================================================
-// Ikvizz HORIZON — everything you know as one living universe.
+// IKVIZZ HORIZON — everything you know as one living universe.
 // Ask it a question and it rearranges: matches pull to the center and ignite.
 // ============================================================================
 async function renderHorizon() {
@@ -4713,7 +4713,7 @@ const savedTheme = localStorage.getItem('aether_theme');
 if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 const savedAccent = localStorage.getItem('aether_accent');
 if (savedAccent) document.documentElement.dataset.accent = savedAccent;
-// Ikvizz Luxe (champagne pearl) is the new signature skin. Roll it out once as
+// IKVIZZ Luxe (champagne pearl) is the new signature skin. Roll it out once as
 // the default — respecting any explicit choice the user makes afterwards.
 if (!localStorage.getItem('aether_skin_v3')) {
   localStorage.setItem('aether_skin', 'pearl');
