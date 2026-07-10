@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const s=require\\('fs'\\).readFileSync\\('public/css/style.css','utf8'\\); const o=\\(s.match\\(/{/g\\)||[]\\).length, c=\\(s.match\\(/}/g\\)||[]\\).length; console.log\\('open',o,'close',c, o===c?'BALANCED':'UNBALANCED'\\);\")",
+      "Bash(curl -s http://localhost:4321/css/style.css)",
+      "Bash(curl -s http://localhost:4321/js/app.js)"
+    ]
+  }
+}

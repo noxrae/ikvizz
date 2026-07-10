@@ -1,0 +1,19 @@
+# Ikvizz — Render Blueprint (free tier).
+# Push this repo to GitHub, then in Render: New → Blueprint → pick the repo.
+# Render reads this file and provisions everything automatically.
+services:
+  - type: web
+    name: ikvizz
+    runtime: docker
+    plan: free                # $0 — see COSTS.md for what "free" includes/excludes
+    healthCheckPath: /
+    envVars:
+      - key: JWT_SECRET        # auto-generated once, kept stable → logins survive restarts
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      # Optional cloud mirror / login providers — leave unset to run fully standalone.
+      # Add these in the Render dashboard ONLY if you choose to wire them up:
+      # - key: SUPABASE_URL
+      # - key: SUPABASE_SECRET_KEY
+      # - key: GOOGLE_CLIENT_ID

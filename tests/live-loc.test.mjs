@@ -1,0 +1,15 @@
+import { io } from 'socket.io-client';
+const B='http://localhost:4321';
+const login=async u=>(await (await fetch(B+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:'aether123'})})).json()).token;
+const a=io(B,{auth:{token:await login('aarav')}}),r=io(B,{auth:{token:await login('rahul')}});
+await Promise.all([new Promise(x=>a.on('connect',x)),new Promise(x=>r.on('connect',x))]);
+a.emit('conversation:join',1);r.emit('conversation:join',1);await new Promise(x=>setTimeout(x,150));
+const sent=await new Promise(res=>a.emit('message:send',{conversationId:1,body:'',location:{lat:13.08,lng:80.27,live:true}},res));
+const ok1=sent?.ok && sent.message.signals.some(s=>s.type==='location'&&s.live===true);
+console.log((ok1?'PASS':'FAIL')+'  live pin sent');
+const upd=new Promise(res=>r.once('message:edited',d=>res(d)));
+a.emit('location:update',{messageId:sent.message.id,lat:13.10,lng:80.29});
+const e=await Promise.race([upd,new Promise(res=>setTimeout(()=>res(null),1500))]);
+const loc=e?.message?.signals?.find(s=>s.type==='location');
+console.log((loc&&loc.lat===13.1?'PASS':'FAIL')+'  live pin moved on recipient');
+a.close();r.close();process.exit(0);

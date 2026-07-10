@@ -1,0 +1,30 @@
+{
+  "name": "ikvizz",
+  "version": "0.1.0",
+  "description": "Ikvizz — Communication should transfer understanding, not messages.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "dev": "node --env-file-if-exists=.env --watch server/index.js",
+    "seed": "node server/seed.js",
+    "test": "node tests/socket.test.mjs",
+    "test:auth": "node --env-file=.env tests/supabase.auth.test.mjs",
+    "test:cloud": "node --env-file=.env tests/cloud.test.mjs",
+    "migrate": "node --env-file=.env supabase/migrate.mjs",
+    "cloud:backfill": "node --env-file=.env supabase/backfill.mjs"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.22.0",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}

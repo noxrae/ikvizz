@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0f0d12" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f2e7dc" media="(prefers-color-scheme: light)" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ikvizz" />
+  <title>Ikvizz — understanding, not messages</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e5d3b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.2 20.2 20H3.8L12 3.2Z'/%3E%3Cpath d='M7.4 14.2h9.2'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script>
+    /* Capture the install prompt the moment the browser offers it (it can fire
+       before the app module runs), so the in-app "Install" button can use it. */
+    window.__bip = null;
+    addEventListener('beforeinstallprompt', e => {
+      e.preventDefault(); window.__bip = e;
+      window.dispatchEvent(new Event('aether-installable'));
+    });
+    addEventListener('appinstalled', () => {
+      window.__bip = null;
+      window.dispatchEvent(new Event('aether-installed'));
+    });
+  </script>
+</head>
+<body>
+  <div id="app" aria-live="polite"></div>
+  <div id="palette-root"></div>
+  <div id="toast-root"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
