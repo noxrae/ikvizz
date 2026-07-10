@@ -5,3 +5,6 @@ data/
 .env.*
 KEYS.local.md
 *.local.md
+
+# generated distributable QR (regenerable)
+ikvizz-install-qr.png

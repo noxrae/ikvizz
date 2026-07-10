@@ -236,7 +236,6 @@ async function renderAuth(mode = 'login') {
       </button>
       <div id="gsi-slot" style="display:flex;justify-content:center;margin-top:8px"></div>
       <div class="auth-switch">${isReg ? 'Already here?' : 'New to IKVIZZ?'} <a href="#" id="auth-switch">${isReg ? 'Sign in' : 'Create an account'}</a></div>
-      <div class="demo-hint">${icon('sparkle', 14, 'accent')} Try the demo world: <code>aarav</code> / <code>aether123</code> (also: rahul, maya, amma, vikram)</div>
     </div>
   </div>`;
   $('#auth-switch').onclick = e => { e.preventDefault(); renderAuth(isReg ? 'login' : 'register'); };
