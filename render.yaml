@@ -12,8 +12,10 @@ services:
         generateValue: true
       - key: NODE_ENV
         value: production
-      # Optional cloud mirror / login providers — leave unset to run fully standalone.
+      # Google Sign-In (public OAuth client ID — safe to commit; not a secret).
+      - key: GOOGLE_CLIENT_ID
+        value: "249308384181-n0sa6fb79r2rurit7tm8fpoj362pjrbd.apps.googleusercontent.com"
+      # Optional cloud mirror — leave unset to run fully standalone.
       # Add these in the Render dashboard ONLY if you choose to wire them up:
       # - key: SUPABASE_URL
       # - key: SUPABASE_SECRET_KEY
-      # - key: GOOGLE_CLIENT_ID
