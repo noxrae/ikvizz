@@ -8,13 +8,19 @@ self.addEventListener('activate', event => event.waitUntil(self.clients.claim())
 
 // A minimal pass-through fetch handler — required for install criteria. We do
 // NOT cache (the app is realtime/local-first); we just proxy to the network and
-// serve the app shell if navigation fails while offline.
+// fall back to the app shell only if the network genuinely fails. IMPORTANT:
+// always resolve to a real Response — never `undefined` (that renders a blank
+// page). `caches.match` returns a Promise, so it must be awaited, not `||`-ed.
 self.addEventListener('fetch', event => {
   const req = event.request;
-  if (req.method !== 'GET') return;
-  if (req.mode === 'navigate') {
-    event.respondWith(fetch(req).catch(() => caches.match('/') || fetch('/')));
-  }
+  if (req.method !== 'GET' || req.mode !== 'navigate') return;
+  event.respondWith((async () => {
+    try {
+      return await fetch(req);
+    } catch {
+      return (await caches.match('/')) || fetch('/');
+    }
+  })());
 });
 
 self.addEventListener('push', event => {

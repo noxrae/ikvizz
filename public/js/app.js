@@ -401,7 +401,13 @@ async function boot() {
   try {
     const meData = await api('/me');
     S.me = meData.user; S.personas = meData.personas; S.contexts = meData.contexts;
-  } catch { return; /* 401 path already signed out */ }
+  } catch {
+    // Stale/invalid token (e.g. signed with an old secret) → don't hang on a
+    // blank screen; drop it and show the sign-in screen.
+    S.token = null;
+    localStorage.removeItem('aether_token');
+    return renderAuth();
+  }
   connectSocket();
   ensureKeys(); // E2E keypair — non-blocking, heals itself on every boot
   await refreshPeople();
