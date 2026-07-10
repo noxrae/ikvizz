@@ -415,6 +415,35 @@ async function boot() {
   initPush(false); // resubscribe silently if permission was already granted
   renderShell();
   route();
+  maybeInstallBanner(); // gentle first-visit nudge to install the PWA (dismissible)
+}
+
+/** First-visit "Install IKVIZZ" banner — one tap to install (native prompt on
+ *  Android/desktop, Add-to-Home-Screen steps on iOS). Shown once; dismissible;
+ *  never shown when already installed (standalone) or previously dismissed. */
+function maybeInstallBanner() {
+  const isStandalone = matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) return;
+  if (localStorage.getItem('aether_install_dismissed')) return;
+  if (document.getElementById('install-banner')) return;
+  const ua = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const el = document.createElement('div');
+  el.id = 'install-banner';
+  el.className = 'install-banner';
+  el.innerHTML = `
+    <span class="ib-mark">${icon('aether', 20, 'accent')}</span>
+    <div class="ib-txt"><b>Install IKVIZZ</b><span>${isIOS
+      ? 'Add it to your Home Screen — full-screen, and it updates itself.'
+      : 'Get it on your home screen — opens full-screen and updates itself.'}</span></div>
+    <button class="btn small" id="ib-go">${icon('download', 14)} Install</button>
+    <button class="ib-x" id="ib-x" aria-label="Not now">${icon('x', 15)}</button>`;
+  document.body.appendChild(el);
+  document.body.classList.add('ib-shown');
+  const dismiss = () => { el.remove(); document.body.classList.remove('ib-shown'); localStorage.setItem('aether_install_dismissed', '1'); };
+  $('#ib-go').onclick = () => { promptInstall(); dismiss(); };
+  $('#ib-x').onclick = dismiss;
+  window.addEventListener('aether-installed', dismiss, { once: true });
 }
 
 /* ---- Web Push (Phase 9) — real background notifications, no Apple/APNs ---- */
@@ -3360,7 +3389,7 @@ async function showSummary() {
     <div class="palette" style="padding:0">
       <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px">
         ${icon('sparkle', 19, 'accent')}<b>Catch me up</b>
-        <button class="btn ghost small" style="margin-left:auto" id="sum-close">Esc</button>
+        <button class="btn ghost small" style="margin-left:auto" id="sum-close" aria-label="Close">${icon('x', 14)}</button>
       </div>
       <div style="padding:18px 20px;max-height:52vh;overflow-y:auto;font-size:14px" id="sum-body">
         <span class="muted">Reading the conversation…</span>
@@ -4754,15 +4783,17 @@ function togglePalette(force) {
   root.innerHTML = `
   <div class="palette-veil" id="pal-veil">
     <div class="palette">
+      <button class="pal-close" id="pal-x" aria-label="Close search">${icon('x', 16)}</button>
       <input id="pal-input" placeholder="Search everything you've ever said, saved, or decided…" autocomplete="off" />
       <div class="filter-pills" id="pal-scopes" style="padding:8px 14px 0">
         ${scopes.map(([k, l]) => `<button data-scope="${k}" class="${k === 'all' ? 'active' : ''}">${l}</button>`).join('')}
       </div>
       <div class="results" id="pal-results"><div class="empty" style="padding:22px">Your entire relationship history is searchable.</div></div>
-      <div class="hint"><kbd>↵</kbd> open · <kbd>Esc</kbd> close — searches messages, memories, space items and people</div>
+      <div class="hint">Searches messages, memories, space items and people. <span class="hint-kbd"><kbd>↵</kbd> open · <kbd>Esc</kbd> close</span><span class="hint-tap">Tap ✕ or outside to close</span></div>
     </div>
   </div>`;
   $('#pal-veil').onmousedown = e => { if (e.target.id === 'pal-veil') togglePalette(false); };
+  $('#pal-x').onclick = () => togglePalette(false);
   const input = $('#pal-input');
   input.focus();
   let seq = 0;
