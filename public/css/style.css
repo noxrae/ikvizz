@@ -1794,6 +1794,11 @@ kbd {
 /* avatars must stay dark inside pearl even on a light-preference OS */
 :root[data-skin="pearl"] .avatar { background: hsl(var(--ah, 220) 30% 26%); color: hsl(var(--ah, 220) 70% 82%); }
 
+/* ── install QR ── */
+.qr-frame { display: inline-grid; place-items: center; padding: 14px; border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm); }
+.qr-frame img { display: block; border-radius: 6px; }
+.qr-url { margin-top: 12px; font-size: 12.5px; font-family: var(--mono); color: var(--text-dim); word-break: break-all; }
+
 /* ── install (PWA) card ── */
 .install-card { display: flex; align-items: center; gap: 14px; }
 .install-card b { font-size: 15px; }

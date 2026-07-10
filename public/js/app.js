@@ -3770,7 +3770,10 @@ function renderMe() {
         <b>Get the app</b>
         <div class="faint">Install Ikvizz on your phone, tablet or laptop — full-screen, launches from your home screen, works like a native app. No app store, no cost.</div>
       </div>
-      <button class="btn" id="install-btn">${icon('download', 14)} Install</button>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn ghost" id="qr-btn" title="Show a QR code to open on a phone">${icon('share', 14)} QR</button>
+        <button class="btn" id="install-btn">${icon('download', 14)} Install</button>
+      </div>
     </div>
 
     <div class="card">
@@ -3899,6 +3902,34 @@ function renderMe() {
   } else {
     $('#install-btn')?.addEventListener('click', promptInstall);
   }
+  $('#qr-btn')?.addEventListener('click', showInstallQR);
+}
+
+/** A scannable QR of this site's URL — scan it on a phone to open (then install). */
+function showInstallQR() {
+  const url = location.origin + '/';
+  const isLocal = /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(location.hostname) || location.hostname.endsWith('.local');
+  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=${encodeURIComponent(url)}`;
+  const root = $('#palette-root');
+  const close = () => { root.innerHTML = ''; };
+  root.innerHTML = `
+  <div class="palette-veil" id="qr-veil"><div class="palette" style="padding:22px;max-width:340px;text-align:center">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;text-align:left">
+      <span class="ic-mark">${icon('share', 18, 'accent')}</span><b style="font-size:16px">Scan to open Ikvizz</b>
+      <button class="btn ghost small" id="qr-x" style="margin-left:auto" aria-label="Close">${icon('x', 12)}</button>
+    </div>
+    <div class="qr-frame"><img src="${esc(qr)}" alt="QR code for ${esc(url)}" width="220" height="220"
+      onerror="this.parentNode.innerHTML='<div class=\\'faint\\' style=\\'padding:24px\\'>Couldn\\'t load the QR image — use the link below.</div>'"></div>
+    <div class="qr-url">${esc(url)}</div>
+    <button class="btn ghost small" id="qr-copy" style="margin-top:10px">${icon('copy', 13)} Copy link</button>
+    ${isLocal ? `<div class="faint" style="margin-top:12px">This is your local address — only works on this computer. After you deploy (Render), reopen this and the QR will point to your public URL that anyone can scan.</div>` : `<div class="faint" style="margin-top:12px">Point a phone camera at this to open Ikvizz, then use <b>Install</b> / Add to Home Screen.</div>`}
+  </div></div>`;
+  $('#qr-x').onclick = close;
+  $('#qr-veil').onmousedown = e => { if (e.target.id === 'qr-veil') close(); };
+  $('#qr-copy').onclick = async () => {
+    try { await navigator.clipboard.writeText(url); toast(`${icon('check', 14, 'ok')} Link copied.`); }
+    catch { toast('Copy failed — long-press the link to copy.', true); }
+  };
 }
 
 /** Trigger the native install prompt, or show manual steps where it's unavailable (iOS). */
