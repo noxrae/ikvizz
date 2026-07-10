@@ -1,18 +1,28 @@
 // ============================================================================
 // IKVIZZ — entrypoint. Express serves the SPA + REST API; Socket.IO rides the
-// same HTTP server. Local-first: one process, one SQLite file, no cloud.
+// same HTTP server. Local-first: one process, one SQLite file. On ephemeral
+// hosts (Render free) the file is restored from — and snapshotted back to —
+// Supabase Storage, so data survives redeploys and sleep.
 // ============================================================================
 import express from 'express';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { api } from './routes.js';
-import { createSocketLayer } from './sockets.js';
-import { startCloud } from './cloud.js';
-import { fileGate } from './auth.js';
+import { restoreIfMissing, startSnapshots } from './persist.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = path.join(__dirname, '..', 'data');
 const PORT = process.env.PORT || 4321;
+
+// CRITICAL ORDER: pull the latest snapshot down BEFORE any module opens SQLite.
+// (db.js opens the file at import time, so these imports must come afterward.)
+await restoreIfMissing(DATA_DIR);
+
+const { api } = await import('./routes.js');
+const { createSocketLayer } = await import('./sockets.js');
+const { startCloud } = await import('./cloud.js');
+const { fileGate } = await import('./auth.js');
+const { db } = await import('./db.js');
 
 const app = express();
 app.disable('x-powered-by');
@@ -45,5 +55,6 @@ server.listen(PORT, () => {
    IKVIZZ  ·  understanding, not messages
    http://localhost:${PORT}
   ─────────────────────────────────────────────`);
-  startCloud(); // Milestone 4: mirror core messaging → Supabase (no-op if unconfigured)
+  startCloud();               // Milestone 4: optional Postgres mirror (no-op if unconfigured)
+  startSnapshots(db, DATA_DIR); // durable persistence: snapshot data → Supabase Storage
 });
