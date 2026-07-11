@@ -38,6 +38,7 @@ export const ICONS = {
   pen: `<path d="m4 20 1-4L16.4 4.6a2.1 2.1 0 0 1 3 3L8 19l-4 1Z"/><path d="m14.4 6.6 3 3"/>`,
   mic: `<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"/>`,
   stop: `<rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/>`,
+  dots: `<circle cx="5.5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.6" fill="currentColor" stroke="none"/>`,
   reply: `<path d="M9.5 7 4.5 12l5 5"/><path d="M4.5 12h8.5a6.5 6.5 0 0 1 6.5 6.5v.5"/>`,
   forward: `<path d="m14.5 7 5 5-5 5"/><path d="M19.5 12H11a6.5 6.5 0 0 0-6.5 6.5v.5"/>`,
   call: `<path d="M6.6 3.5c.6 0 1.2.4 1.4 1l1 3c.2.5 0 1.1-.4 1.5l-1.4 1.3a12.2 12.2 0 0 0 6.5 6.5l1.3-1.4c.4-.4 1-.6 1.5-.4l3 1c.6.2 1 .8 1 1.4v2.2c0 .9-.7 1.6-1.6 1.5C10.4 20.5 3.5 13.6 3 5.1c-.1-.9.6-1.6 1.5-1.6h2.1Z"/>`,

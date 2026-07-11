@@ -1357,11 +1357,13 @@ async function openChat(conversationId) {
         ${other ? `<button class="tray-item" id="seal-btn"><span class="ti-ic ti-slate">${icon('unlock', 20)}</span><span>Seal (E2E)</span></button>` : ''}
       </div>
       <div class="composer">
-        <button class="btn ghost round" id="plus-btn" title="More — photos, camera, location, poll…" aria-label="More attachments">${icon('plus', 18)}</button>
-        <button class="btn ghost round" id="emoji-btn" title="Emoji" aria-label="Emoji">${icon('smile', 17)}</button>
-        <button class="btn ghost round" id="mood-btn" title="Tag how you mean it — the Emotion Layer" aria-label="Tag your mood">${icon('sparkle', 17)}</button>
-        <textarea class="input" id="composer" rows="1" placeholder="${PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]}"></textarea>
-        <button class="btn ghost round" id="mic-btn" title="Record a voice note" aria-label="Record a voice note">${icon('mic', 17)}</button>
+        <div class="composer-pill">
+          <button class="pill-ic" id="plus-btn" title="More — photos, camera, location, poll…" aria-label="More attachments">${icon('plus', 20)}</button>
+          <button class="pill-ic" id="emoji-btn" title="Emoji" aria-label="Emoji">${icon('smile', 19)}</button>
+          <textarea class="input" id="composer" rows="1" placeholder="${PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]}"></textarea>
+          <button class="pill-ic" id="mood-btn" title="Tag how you mean it — the Emotion Layer" aria-label="Tag your mood">${icon('sparkle', 19)}</button>
+          <button class="pill-ic" id="mic-btn" title="Record a voice note" aria-label="Record a voice note">${icon('mic', 19)}</button>
+        </div>
         <button class="btn round" id="send-btn" title="Send" aria-label="Send message">${icon('send', 17)}</button>
       </div>
     </div>
@@ -1736,6 +1738,98 @@ function closeReactBar() {
   S.reactTarget = null;
 }
 
+/* ---- message action popover ------------------------------------------------
+   Reactions on top, then Reply / Forward / Copy / Remember / Pin / Edit / Delete.
+   Anchored to the tapped message and clamped inside the viewport (never behind
+   the composer), so even the last message's Delete stays fully visible. */
+function closeMsgMenu() {
+  document.getElementById('msg-menu')?.remove();
+  document.querySelectorAll('.bubble.menu-target').forEach(b => b.classList.remove('menu-target'));
+}
+
+function openMsgMenu(m, anchor) {
+  closeMsgMenu();
+  closeReactBar();
+  const mine = m.sender.id === S.me.id;
+  const sealed = m.kind === 'sealed';
+  const pinned = S.chat?.pinned?.includes(m.id);
+  const menu = document.createElement('div');
+  menu.id = 'msg-menu';
+  menu.className = 'msg-menu';
+  const reacts = REACT_SET.map(k => `<button class="mm-react" data-mm-react="${k}" title="${MOODS[k]?.label || k}">${mood(k, 24)}</button>`).join('');
+  const item = (act, ic, label, cls = '') => `<button class="mm-act ${cls}" data-mm="${act}">${icon(ic, 16)}<span>${label}</span></button>`;
+  const acts = [
+    item('reply', 'reply', 'Reply'),
+    sealed ? '' : item('fwd', 'forward', 'Forward'),
+    sealed || !m.body ? '' : item('copy', 'copy', 'Copy'),
+    sealed ? '' : item('remember', 'star', 'Remember'),
+    item('pin', 'pin', pinned ? 'Unpin' : 'Pin'),
+    mine && !sealed && !m.attachment ? item('edit', 'pen', 'Edit') : '',
+    mine ? item('del', 'trash', 'Delete', 'danger') : '',
+  ].filter(Boolean).join('');
+  menu.innerHTML = `<div class="mm-reacts">${reacts}</div><div class="mm-acts">${acts}</div>`;
+  document.body.appendChild(menu);
+  positionMsgMenu(menu, anchor);
+  anchor.classList.add('menu-target');
+  menu.querySelectorAll('[data-mm-react]').forEach(b => b.onclick = () => {
+    S.socket.emit('reaction:toggle', { messageId: m.id, kind: b.dataset.mmReact });
+    closeMsgMenu();
+  });
+  menu.querySelectorAll('[data-mm]').forEach(b => b.onclick = () => { const k = b.dataset.mm; closeMsgMenu(); msgAction(k, m); });
+  // A scroll of the thread invalidates the anchor position → just close it.
+  $('#msgs')?.addEventListener('scroll', closeMsgMenu, { once: true, passive: true });
+}
+
+function positionMsgMenu(menu, anchor) {
+  const a = anchor.getBoundingClientRect();
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  const vw = window.innerWidth, vh = window.innerHeight, pad = 10;
+  // Never overlap the fixed composer at the bottom.
+  const composer = document.querySelector('.composer');
+  const bottomLimit = (composer ? composer.getBoundingClientRect().top : vh) - 8;
+  let top = a.top - mh - 8;                              // prefer above the message
+  if (top < pad + 52) top = a.bottom + 8;               // no room above → below it
+  if (top + mh > bottomLimit) top = Math.max(pad + 52, bottomLimit - mh); // clamp up
+  let left = Math.min(Math.max(pad, a.left), vw - mw - pad);
+  menu.style.top = top + 'px';
+  menu.style.left = left + 'px';
+}
+
+/** Perform a message action chosen from the popover. */
+function msgAction(kind, m) {
+  if (!S.chat) return;
+  if (kind === 'reply') {
+    S.chat.editing = null;
+    S.chat.replyTo = { id: m.id, name: m.sender.display_name, body: m.kind === 'sealed' ? 'Encrypted message' : (m.body || m.attachment?.name || '').slice(0, 120) };
+    renderComposerNote();
+    $('#composer')?.focus();
+  } else if (kind === 'edit') {
+    S.chat.replyTo = null;
+    S.chat.editing = m.id;
+    const ta = $('#composer');
+    if (ta) { ta.value = m.body; ta.dispatchEvent(new Event('input')); ta.focus(); }
+    renderComposerNote();
+  } else if (kind === 'del') {
+    S.socket.emit('message:delete', { messageId: m.id }, r => { if (!r?.ok) toast(esc(r?.error || 'Could not remove'), true); });
+  } else if (kind === 'fwd') {
+    showForward(m);
+  } else if (kind === 'copy') {
+    navigator.clipboard.writeText(m.body || '').then(() => toast(`${icon('copy', 13)} Copied.`)).catch(() => {});
+  } else if (kind === 'remember') {
+    api('/memories', { body: { messageId: m.id } })
+      .then(() => { toast(`${icon('star', 15, 'accent')} Saved forever. No takebacks.`); if (S.chat?.other) renderSidePanel(); })
+      .catch(e => toast(esc(e.message), true));
+  } else if (kind === 'pin') {
+    api(`/messages/${m.id}/pin`, { body: {} }).then(r => {
+      if (!S.chat) return;
+      S.chat.pinned = r.pinned ? [...(S.chat.pinned || []), m.id] : (S.chat.pinned || []).filter(id => id !== m.id);
+      refreshMessageNode(m);
+      renderPinStrip();
+      toast(r.pinned ? `${icon('pin', 14, 'accent')} Pinned.` : `${icon('pin', 14)} Unpinned.`);
+    }).catch(e => toast(esc(e.message), true));
+  }
+}
+
 // A small, expressive emoji set for typing (standard unicode goes in text).
 const TYPE_EMOJI = ['😭','😂','💀','🔥','❤️','🥹','✨','😩','🙏','😳','👀','😤','🫶','😮‍💨','🤝','💯','🥲','😎','🫠','🤌','😅','🥶','🙌','😔'];
 function toggleEmojiPanel() {
@@ -1803,16 +1897,10 @@ function messageHtml(m, prev) {
       <b>${esc(m.reply.name)}</b><span>${esc(m.reply.body)}</span>
     </button>` : '';
 
-  const acts = [
-    `<button data-open-react title="React">${icon('smile', 13)}</button>`,
-    `<button data-reply="${m.id}" title="Reply">${icon('reply', 13)}</button>`,
-    sealed ? '' : `<button data-fwd="${m.id}" title="Forward">${icon('forward', 13)}</button>`,
-    sealed || !m.body ? '' : `<button data-copy="${m.id}" title="Copy text">${icon('copy', 13)}</button>`,
-    sealed ? '' : `<button data-remember="${m.id}" title="Remember this forever">${icon('star', 13)}</button>`,
-    `<button data-pin="${m.id}" title="${S.chat?.pinned?.includes(m.id) ? 'Unpin' : 'Pin to the top'}" ${S.chat?.pinned?.includes(m.id) ? 'class="pin-on"' : ''}>${icon('pin', 13)}</button>`,
-    mine && !sealed && !m.attachment ? `<button data-edit="${m.id}" title="Edit">${icon('pen', 13)}</button>` : '',
-    mine ? `<button data-del="${m.id}" title="Remove">${icon('trash', 13)}</button>` : '',
-  ].join('');
+  // One tidy "⋯" trigger — it opens a popover (reactions + all actions) anchored
+  // right next to the message and clamped on-screen. No more cluttered inline row
+  // that runs off the bottom behind the composer.
+  const acts = `<button data-open-menu title="Message options" aria-label="Message options">${icon('dots', 15)}</button>`;
 
   return `
   <div class="msg ${mine ? 'mine' : ''} ${gap ? 'gap' : ''}" data-mid="${m.id}">
@@ -1850,52 +1938,6 @@ function wireMessageNode(node, m) {
     S.capsuleTimers[m.id] = setTimeout(() => revealCapsule(m.id), delay);
   }
 
-  node.querySelector('[data-remember]')?.addEventListener('click', async () => {
-    try {
-      await api('/memories', { body: { messageId: m.id } });
-      toast(`${icon('star', 15, 'accent')} Saved forever. No takebacks.`);
-      if (S.chat?.other) renderSidePanel();
-    } catch (e) { toast(esc(e.message), true); }
-  });
-
-  node.querySelector('[data-reply]')?.addEventListener('click', () => {
-    if (!S.chat) return;
-    S.chat.editing = null;
-    S.chat.replyTo = { id: m.id, name: m.sender.display_name, body: m.kind === 'sealed' ? 'Encrypted message' : (m.body || m.attachment?.name || '').slice(0, 120) };
-    renderComposerNote();
-    $('#composer')?.focus();
-  });
-
-  node.querySelector('[data-edit]')?.addEventListener('click', () => {
-    if (!S.chat) return;
-    S.chat.replyTo = null;
-    S.chat.editing = m.id;
-    const ta = $('#composer');
-    if (ta) { ta.value = m.body; ta.dispatchEvent(new Event('input')); ta.focus(); }
-    renderComposerNote();
-  });
-
-  node.querySelector('[data-del]')?.addEventListener('click', () => {
-    S.socket.emit('message:delete', { messageId: m.id }, r => { if (!r?.ok) toast(esc(r?.error || 'Could not remove'), true); });
-  });
-
-  node.querySelector('[data-fwd]')?.addEventListener('click', () => showForward(m));
-
-  node.querySelector('[data-pin]')?.addEventListener('click', async () => {
-    try {
-      const r = await api(`/messages/${m.id}/pin`, { body: {} });
-      if (!S.chat) return;
-      S.chat.pinned = r.pinned ? [...(S.chat.pinned || []), m.id] : (S.chat.pinned || []).filter(id => id !== m.id);
-      refreshMessageNode(m);
-      renderPinStrip();
-      toast(r.pinned ? `${icon('pin', 14, 'accent')} Pinned.` : `${icon('pin', 14)} Unpinned.`);
-    } catch (e) { toast(esc(e.message), true); }
-  });
-
-  node.querySelector('[data-copy]')?.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(m.body || ''); toast(`${icon('copy', 13)} Copied.`); } catch { }
-  });
-
   // Voice notes: cycle playback speed 1× → 1.5× → 2×
   const audio = node.querySelector('.att-audio');
   if (audio) {
@@ -1928,29 +1970,28 @@ function wireMessageNode(node, m) {
     });
   });
 
-  // Midnight Glow reactions: the hover ⊕ and long-press both open the reaction
-  // bar that sits JUST ABOVE THE INPUT (not floating at the message).
-  node.querySelector('[data-open-react]')?.addEventListener('click', e => {
+  // The "⋯" trigger and a short tap / long-press on the bubble all open the same
+  // popover — reactions on top, then Reply / Forward / Copy / Remember / Pin /
+  // Edit / Delete — positioned right next to THIS message and kept on-screen.
+  node.querySelector('[data-open-menu]')?.addEventListener('click', e => {
     e.stopPropagation();
-    openReactBar(m.id);
+    openMsgMenu(m, node.querySelector('.bubble') || node);
   });
   const bub = node.querySelector('.bubble');
   if (bub) {
     let pressT = null, moved = false, longFired = false;
-    const start = () => { moved = false; longFired = false; pressT = setTimeout(() => { if (!moved) { longFired = true; openReactBar(m.id); if (navigator.vibrate) navigator.vibrate(12); } }, 380); };
+    const openHere = () => openMsgMenu(m, bub);
+    const start = () => { moved = false; longFired = false; pressT = setTimeout(() => { if (!moved) { longFired = true; openHere(); if (navigator.vibrate) navigator.vibrate(12); } }, 380); };
     const cancel = () => clearTimeout(pressT);
     bub.addEventListener('touchstart', start, { passive: true });
     bub.addEventListener('touchmove', () => { moved = true; cancel(); }, { passive: true });
     bub.addEventListener('touchend', cancel);
     bub.addEventListener('mousedown', start); bub.addEventListener('mouseup', cancel); bub.addEventListener('mouseleave', cancel);
-    // A short tap (not a long-press, not a link/media click) toggles the action
-    // bar — this is the ONLY way reply/edit/delete/forward reach touch users.
+    // A short tap (not a long-press, not a link/media click) opens the menu.
     bub.addEventListener('click', e => {
       if (longFired) { longFired = false; return; }
       if (e.target.closest('a, button, audio, video, .att-img, [data-jump], [data-poll-opt]')) return;
-      const wasOpen = node.classList.contains('acts-open');
-      document.querySelectorAll('.msg.acts-open').forEach(n => n.classList.remove('acts-open'));
-      if (!wasOpen) node.classList.add('acts-open');
+      openHere();
     });
   }
   node.querySelectorAll('[data-react]').forEach(b => b.onclick = () => {
@@ -2076,8 +2117,9 @@ document.addEventListener('click', e => {
   // Close the reaction bar / emoji panel when clicking outside them
   if (!e.target.closest('#react-bar') && !e.target.closest('[data-open-react]') && !e.target.closest('.bubble')) closeReactBar();
   if (!e.target.closest('#emoji-panel') && !e.target.closest('#emoji-btn')) { const p = $('#emoji-panel'); if (p) p.hidden = true; }
-  // Close any open message action bar when tapping elsewhere
-  if (!e.target.closest('.msg')) document.querySelectorAll('.msg.acts-open').forEach(n => n.classList.remove('acts-open'));
+  // Close the message action popover when tapping outside it (but not when the
+  // tap is what opened it — the bubble / ⋯ trigger).
+  if (!e.target.closest('#msg-menu') && !e.target.closest('[data-open-menu]') && !e.target.closest('.bubble')) closeMsgMenu();
 });
 
 /* ---- message effects: little moments of joy -------------------------------- */
@@ -2519,7 +2561,7 @@ function wireComposer() {
   };
 
   // Voice notes — recorded in-app, stored locally like any attachment
-  let recorder = null, recChunks = [], recTimer = null, recStart = 0;
+  let recorder = null, recChunks = [], recTimer = null, recStart = 0, recCancel = false;
   const emojiBtn = $('#emoji-btn');
   if (emojiBtn) emojiBtn.onclick = e => { e.stopPropagation(); toggleEmojiPanel(); };
   // The "+" tray: one tap reveals photos, camera, location, mood, seal, song bomb.
@@ -2542,21 +2584,24 @@ function wireComposer() {
   if (songBomb) songBomb.onclick = () => startMusicSync(); // dedicate a track + listen together
   const micBtn = $('#mic-btn');
   const stopRecording = () => { try { recorder?.stop(); } catch { } };
+  const cancelRecording = () => { recCancel = true; stopRecording(); };
   micBtn.onclick = async () => {
     if (recorder && recorder.state === 'recording') return stopRecording();
     if (!navigator.mediaDevices?.getUserMedia) return toast('Microphone not available in this browser.', true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recChunks = [];
+      recCancel = false;
       recorder = new MediaRecorder(stream);
       recorder.ondataavailable = e => e.data.size && recChunks.push(e.data);
       recorder.onstop = async () => {
         clearInterval(recTimer);
         micBtn.classList.remove('rec');
-        micBtn.innerHTML = icon('mic', 17);
+        micBtn.innerHTML = icon('mic', 19);
         $('#composer-note').innerHTML = '';
         renderComposerNote();
         stream.getTracks().forEach(t => t.stop());
+        if (recCancel) { recCancel = false; toast(`${icon('trash', 14)} Voice note discarded.`); return; } // cancelled → don't send
         const blob = new Blob(recChunks, { type: recorder.mimeType || 'audio/webm' });
         if (blob.size < 1200) return; // accidental tap
         if (blob.size > 8 * 1024 * 1024) return toast('Voice note too long (max 8 MB).', true);
@@ -2571,11 +2616,14 @@ function wireComposer() {
       recorder.start();
       recStart = Date.now();
       micBtn.classList.add('rec');
-      micBtn.innerHTML = icon('stop', 17);
+      micBtn.innerHTML = icon('stop', 19);
       const tick = () => {
         const s = Math.floor((Date.now() - recStart) / 1000);
-        $('#composer-note').innerHTML = `<div class="note-card rec-note">${icon('mic', 13, 'critical')} Recording… <b>${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</b><div style="flex:1"></div><button class="btn ghost small" id="rec-stop">${icon('stop', 11)} Stop & send</button></div>`;
+        $('#composer-note').innerHTML = `<div class="note-card rec-note">${icon('mic', 13, 'critical')} Recording… <b>${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</b><div style="flex:1"></div>
+          <button class="btn ghost small" id="rec-cancel" title="Cancel — discard this recording">${icon('trash', 11)} Cancel</button>
+          <button class="btn small" id="rec-stop">${icon('send', 11)} Send</button></div>`;
         $('#rec-stop').onclick = stopRecording;
+        $('#rec-cancel').onclick = cancelRecording;
       };
       tick();
       recTimer = setInterval(tick, 1000);
@@ -2989,8 +3037,60 @@ function showForward(m) {
    handshake; your voice and face never touch it. Includes screen share.
    ============================================================================ */
 const CALL = { pc: null, stream: null, other: null, media: 'audio', t0: 0, timer: null };
-const RTC_CFG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+// STUN discovers your public address; TURN relays media when a direct peer path
+// can't be made (common on mobile/CGNAT — the usual reason a call "won't connect").
+// OpenRelay is a free public TURN service ($0, no signup).
+const RTC_CFG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  ],
+};
 const sig = (to, data) => S.socket.emit('call:signal', { to, data });
+
+/* Ringtone / ringback — generated live with the Web Audio API (no asset file,
+   works offline). "incoming" = a double-ring + vibration; "ringback" = the tone
+   the caller hears while waiting. Autoplay policies may keep it silent until the
+   user interacts, but the caller's tap that starts the call unlocks it. */
+const Ringer = {
+  ctx: null, timer: null, vib: null,
+  _beep(freq, dur, when, vol) {
+    const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(vol, when + 0.05);
+    g.gain.setValueAtTime(vol, when + dur - 0.06);
+    g.gain.linearRampToValueAtTime(0, when + dur);
+    osc.connect(g).connect(this.ctx.destination);
+    osc.start(when); osc.stop(when + dur + 0.03);
+  },
+  start(mode) {
+    this.stop();
+    try {
+      this.ctx ||= new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+      const ring = () => {
+        const t = this.ctx.currentTime;
+        if (mode === 'incoming') { this._beep(480, 0.4, t, 0.16); this._beep(620, 0.4, t + 0.45, 0.16); }
+        else { this._beep(420, 0.9, t, 0.09); }
+      };
+      ring();
+      this.timer = setInterval(ring, mode === 'incoming' ? 2200 : 3200);
+    } catch { /* Web Audio unavailable — vibration still helps below */ }
+    if (mode === 'incoming' && navigator.vibrate) {
+      const buzz = () => navigator.vibrate([500, 300, 500]);
+      buzz(); this.vib = setInterval(buzz, 2200);
+    }
+  },
+  stop() {
+    clearInterval(this.timer); this.timer = null;
+    clearInterval(this.vib); this.vib = null;
+    if (navigator.vibrate) { try { navigator.vibrate(0); } catch {} }
+  },
+};
 
 function callUI(state, who) {
   let root = $('#call-root');
@@ -3039,6 +3139,7 @@ async function makePc(otherId) {
   pc.onconnectionstatechange = () => {
     const el = $('#call-state');
     if (pc.connectionState === 'connected' && el) {
+      Ringer.stop(); // answered / media flowing → silence the ring
       CALL.t0 = Date.now();
       clearInterval(CALL.timer);
       CALL.timer = setInterval(() => {
@@ -3064,6 +3165,7 @@ async function startCall(other, media) {
   if (!stream) return;
   CALL.media = media; CALL.other = other.other_id; CALL.stream = stream;
   callUI('ringing…', other);
+  Ringer.start('ringback'); // caller hears a ring while waiting for an answer
   const lv = $('#lv'); if (lv) lv.srcObject = stream;
   CALL.pc = await makePc(other.other_id);
   stream.getTracks().forEach(t => CALL.pc.addTrack(t, stream));
@@ -3087,6 +3189,7 @@ async function acceptCall(from, fromMeta, offer, media) {
 }
 
 function endCall(tellPeer) {
+  Ringer.stop();
   if (tellPeer && CALL.other) sig(CALL.other, { type: 'end' });
   clearInterval(CALL.timer);
   CALL.pc?.close();
@@ -3210,14 +3313,16 @@ function wireCallSignals(socket) {
           </div>
         </div>`;
       document.body.appendChild(root);
-      $('#ring-yes').onclick = () => { root.remove(); acceptCall(from, meta, data.sdp, data.media); };
-      $('#ring-no').onclick = () => { root.remove(); sig(from, { type: 'end' }); };
-      setTimeout(() => { if ($('#ring-veil')) { root.remove(); sig(from, { type: 'end' }); } }, 45000);
+      Ringer.start('incoming'); // ring + vibrate until answered/declined
+      $('#ring-yes').onclick = () => { Ringer.stop(); root.remove(); acceptCall(from, meta, data.sdp, data.media); };
+      $('#ring-no').onclick = () => { Ringer.stop(); root.remove(); sig(from, { type: 'end' }); };
+      setTimeout(() => { if ($('#ring-veil')) { Ringer.stop(); root.remove(); sig(from, { type: 'end' }); } }, 45000);
     } else if (data.type === 'answer') {
       await CALL.pc?.setRemoteDescription(data.sdp);
     } else if (data.type === 'ice') {
       try { await CALL.pc?.addIceCandidate(data.candidate); } catch { /* late candidate */ }
     } else if (data.type === 'end') {
+      Ringer.stop();
       $('#ring-veil')?.remove();
       if (CALL.pc) { toast(`${icon('call', 14)} Call ended.`); endCall(false); }
     }
