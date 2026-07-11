@@ -15,6 +15,7 @@ import { GOOGLE_CLIENT_ID, verifyGoogleToken, verifyGoogleAccessToken, userForGo
 import { normalizeAvatar } from '../public/js/avatar.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_ENABLED, verifySupabaseToken, userForSupabase } from './supabase.js';
 import { mirror } from './cloud.js';
+import { persistStatus } from './persist.js';
 import { notify } from './notify.js';
 import { vapidPublicKey } from './push.js';
 import crypto from 'node:crypto';
@@ -73,6 +74,10 @@ api.get('/auth/config', (_req, res) => res.json({
   googleClientId: GOOGLE_CLIENT_ID,
   supabase: SUPABASE_ENABLED ? { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY } : null,
 }));
+
+// Health + persistence status — booleans only, no secret values. Open
+// https://<your-app>/api/health to confirm durable backups are actually ON.
+api.get('/health', (_req, res) => res.json({ ok: true, persist: persistStatus() }));
 
 api.post('/auth/google', async (req, res) => {
   try {
@@ -803,7 +808,10 @@ api.post('/spaces/:id/members', wrap((req, res) => {
   if (!['owner', 'admin'].includes(spaceRole(space.id, req.userId))) {
     throw httpErr(403, 'Only the owner or an admin can invite people here.');
   }
-  const other = db.prepare(`SELECT id FROM users WHERE username=?`).get(String(req.body?.username || '').trim().toLowerCase());
+  // Accept either a userId (from the "add a friend" picker) or a username.
+  const other = req.body?.userId
+    ? db.prepare(`SELECT id FROM users WHERE id=?`).get(Number(req.body.userId))
+    : db.prepare(`SELECT id FROM users WHERE username=?`).get(String(req.body?.username || '').trim().toLowerCase());
   if (!other) throw httpErr(404, 'No such user.');
   db.prepare(`INSERT OR IGNORE INTO space_members (space_id, user_id) VALUES (?,?)`).run(space.id, other.id);
   const convo = db.prepare(`SELECT id FROM conversations WHERE kind='space' AND space_id=?`).get(space.id);

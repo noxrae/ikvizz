@@ -243,6 +243,49 @@ function signOut() {
   renderAuth();
 }
 
+/** Ask before signing out (or any risky action). Resolves on confirm. */
+function confirmDialog({ title, body, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false, onConfirm }) {
+  const root = $('#palette-root');
+  const close = () => { root.innerHTML = ''; };
+  root.innerHTML = `
+  <div class="palette-veil" id="cd-veil"><div class="palette" style="padding:22px;max-width:360px">
+    <b style="font-size:16px">${esc(title)}</b>
+    <div class="faint" style="margin:8px 0 18px;line-height:1.45">${esc(body)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn ghost" id="cd-cancel">${esc(cancelLabel)}</button>
+      <button class="btn ${danger ? 'danger' : ''}" id="cd-ok" ${danger ? 'style="background:var(--critical);border-color:var(--critical);color:#fff"' : ''}>${esc(confirmLabel)}</button>
+    </div>
+  </div></div>`;
+  $('#cd-veil').onmousedown = e => { if (e.target.id === 'cd-veil') close(); };
+  $('#cd-cancel').onclick = close;
+  $('#cd-ok').onclick = () => { close(); onConfirm?.(); };
+}
+
+/** Transient boot failure (server waking from sleep) — keep the session, retry.
+ *  Deliberately NOT the sign-in screen: the user is still logged in. */
+function renderReconnect() {
+  app().innerHTML = `
+  <div style="min-height:100dvh;display:grid;place-items:center;padding:24px;text-align:center">
+    <div style="max-width:340px">
+      <div style="opacity:.85">${icon('aether', 40, 'accent')}</div>
+      <h2 style="margin:14px 0 6px">Waking the server…</h2>
+      <p class="faint" style="line-height:1.5">Free hosting takes a short nap when idle. This first load can take up to a minute — your account and chats are safe.</p>
+      <button class="btn" id="reconnect-btn" style="margin-top:16px">${icon('orbit', 14)} Retry now</button>
+    </div>
+  </div>`;
+  $('#reconnect-btn').onclick = () => { app().innerHTML = `<div class="empty" style="min-height:100dvh;display:grid;place-items:center">Connecting…</div>`; boot(); };
+  setTimeout(() => { if (document.getElementById('reconnect-btn')) boot(); }, 6000); // auto-retry
+}
+
+/** Sign-out button → confirm first (auto-logout on a 401 still goes direct). */
+function confirmSignOut() {
+  confirmDialog({
+    title: 'Sign out of IKVIZZ?',
+    body: 'Your account, chats and friends stay safe — you can sign back in anytime and everything will be here.',
+    confirmLabel: 'Sign out', danger: true, onConfirm: signOut,
+  });
+}
+
 /* ---- Supabase Auth (Milestone 3) — the identity provider seam.
    We speak GoTrue's REST API directly (no SDK, no build step): sign-up and
    sign-in happen against Supabase, then the access token is exchanged at
@@ -396,18 +439,30 @@ async function wireGoogleSignIn() {
 }
 
 // ------------------------------------------------------------------ boot -----
+/** Load /me directly so we can tell a real auth failure (401) apart from a
+ *  transient one (server waking from sleep, network blip) — the latter must
+ *  NEVER silently log the user out. */
+async function fetchMe() {
+  const res = await fetch('/api/me', { headers: { Authorization: 'Bearer ' + S.token } });
+  if (!res.ok) { const e = new Error('me failed'); e.status = res.status; throw e; }
+  return res.json();
+}
+
 async function boot() {
   if (!S.token) return renderAuth();
-  try {
-    const meData = await api('/me');
-    S.me = meData.user; S.personas = meData.personas; S.contexts = meData.contexts;
-  } catch {
-    // Stale/invalid token (e.g. signed with an old secret) → don't hang on a
-    // blank screen; drop it and show the sign-in screen.
-    S.token = null;
-    localStorage.removeItem('aether_token');
-    return renderAuth();
+  let meData = null;
+  for (let attempt = 0; ; attempt++) {
+    try { meData = await fetchMe(); break; }
+    catch (e) {
+      if (e.status === 401) { // genuine: token invalid or account gone
+        S.token = null; localStorage.removeItem('aether_token');
+        return renderAuth();
+      }
+      if (attempt >= 3) return renderReconnect(); // transient → keep the token, offer retry
+      await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+    }
   }
+  S.me = meData.user; S.personas = meData.personas; S.contexts = meData.contexts;
   connectSocket();
   ensureKeys(); // E2E keypair — non-blocking, heals itself on every boot
   await refreshPeople();
@@ -3696,9 +3751,22 @@ async function renderSpaceDetail(spaceId, tab = 'chat') {
     // Phase 6: roles are visible and the owner steers — admins help
     const myRole = d.members.find(m => m.id === S.me.id)?.role || 'member';
     const canManage = ['owner', 'admin'].includes(myRole);
+    const addable = (S.people || []).filter(p => p.other_id && !d.members.some(m => m.id === p.other_id));
     body.innerHTML = `
       <div class="page-narrow">
-        ${canManage ? `<div class="add-inline"><input class="input" id="sm-username" placeholder="username to invite" style="max-width:240px" /><button class="btn small" id="sm-add">Invite</button></div>`
+        ${canManage ? `
+          <div class="add-inline">
+            <select class="input" id="sm-friend" style="max-width:240px">
+              <option value="">Add someone from your friends…</option>
+              ${addable.map(p => `<option value="${p.other_id}">${esc(p.display_name)}</option>`).join('')}
+            </select>
+            <button class="btn small" id="sm-add-friend">Add</button>
+          </div>
+          ${!addable.length ? `<div class="faint" style="margin:6px 0 4px">Everyone in your friends list is already here.</div>` : ''}
+          <div class="add-inline" style="margin-top:8px">
+            <input class="input" id="sm-username" placeholder="…or invite by username" style="max-width:240px" />
+            <button class="btn ghost small" id="sm-add">Invite</button>
+          </div>`
           : `<div class="faint" style="margin-bottom:10px">Only the owner and admins can invite people here.</div>`}
         ${d.members.map(m => `<div class="persona-row">${avatarHtml(m)}
           <div style="flex:1"><b>${esc(m.display_name)}</b><div class="faint">@${esc(m.username)} · <span class="chip" style="font-size:10px;padding:0 7px">${esc(m.role)}</span></div></div>
@@ -3707,6 +3775,13 @@ async function renderSpaceDetail(spaceId, tab = 'chat') {
             : (myRole === 'owner' && m.role !== 'owner') || (myRole === 'admin' && m.role === 'member') ? `<button class="btn ghost small" data-kick="${m.id}">${icon('x', 11)} Remove</button>` : ''}
         </div>`).join('')}
       </div>`;
+    const smAddFriend = $('#sm-add-friend');
+    if (smAddFriend) smAddFriend.onclick = async () => {
+      const uid = $('#sm-friend').value;
+      if (!uid) return toast('Pick a friend to add.', true);
+      try { await api(`/spaces/${spaceId}/members`, { body: { userId: Number(uid) } }); toast(`${icon('users', 14, 'accent')} Added to the space.`); renderSpaceDetail(spaceId, 'members'); }
+      catch (e) { toast(esc(e.message), true); }
+    };
     const smAdd = $('#sm-add');
     if (smAdd) smAdd.onclick = async () => {
       try { await api(`/spaces/${spaceId}/members`, { body: { username: $('#sm-username').value } }); toast(`${icon('users', 14, 'accent')} Invited.`); renderSpaceDetail(spaceId, 'members'); }
@@ -4123,7 +4198,7 @@ function renderMe() {
     localStorage.setItem('aether_skin', next);
     renderMe();
   });
-  $('#signout-btn').onclick = signOut;
+  $('#signout-btn').onclick = confirmSignOut;
 
   // Install (PWA): reflect installed state, otherwise prompt or guide.
   const installCard = $('#install-card');

@@ -27,6 +27,16 @@ const SERVICE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERV
 const ALLOWED = process.env.NODE_ENV === 'production' || process.env.PERSIST_FORCE === '1';
 export const PERSIST_ENABLED = !!(URL_BASE && SERVICE_KEY && ALLOWED);
 
+/** Status booleans for a health check — NEVER leaks the actual secret values. */
+export const persistStatus = () => ({
+  enabled: PERSIST_ENABLED,
+  hasUrl: !!URL_BASE,
+  hasKey: !!SERVICE_KEY,
+  production: process.env.NODE_ENV === 'production',
+  bucket: BUCKET,
+  key: KEY,
+});
+
 const BUCKET = 'ikvizz-backups';
 const KEY = process.env.PERSIST_KEY || 'prod';
 const DB_OBJECT = `${KEY}/db/aether.db`;
@@ -188,7 +198,7 @@ export function startSnapshots(db, dataDir) {
   console.log(`  IKVIZZ Persist: on — snapshotting data → Supabase Storage (bucket "${BUCKET}", key "${KEY}")`);
 
   seedMirroredMedia().then(() => snapshotNow(db, dataDir, { force: true })); // first backup soon after boot
-  const iv = setInterval(() => snapshotNow(db, dataDir), 90_000); // every 90s if changed
+  const iv = setInterval(() => snapshotNow(db, dataDir), 25_000); // every 25s if changed — bounds worst-case loss
   iv.unref?.();
 
   // Save on the way out — Render sends SIGTERM before recycling the container.
