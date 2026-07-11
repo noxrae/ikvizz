@@ -81,6 +81,21 @@ their current free allowance against `COSTS.md`.
 
 ---
 
+## Reliable long-distance calls (optional, free) — TURN
+
+Voice/video calls connect peer-to-peer. Between people on the same/simple networks
+that "just works", but across mobile/CGNAT networks far apart, WebRTC needs a
+**TURN relay**. The app ships with a free public relay (OpenRelay) which works
+*most* of the time; for rock-solid calls, plug in your own free TURN:
+
+1. Create a free account at **https://www.metered.ca/** (TURN, 50 GB/month free).
+2. In their dashboard, note your **subdomain** (e.g. `yourname.metered.live`) and **API key**.
+3. In Render → **Environment**, add:
+   - `METERED_DOMAIN` = `yourname.metered.live`
+   - `METERED_API_KEY` = your key
+4. Save → redeploy. The app now serves real TURN credentials at `/api/ice` and
+   long-distance calls connect reliably. No code change needed.
+
 ## Optional environment variables (all optional)
 The app runs fully standalone with **none** of these. Add them in the host
 dashboard only if you want the extra features:

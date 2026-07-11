@@ -550,8 +550,20 @@ kbd {
   background: var(--bg-2); border: 1px solid var(--line); box-shadow: var(--shadow-sm); color: var(--text-dim);
 }
 .hover-acts button:hover { color: var(--accent); border-color: var(--accent); }
-/* on touch there's no hover — keep the trigger gently visible */
-@media (hover: none) { .msg .hover-acts { opacity: .6; } }
+/* On touch there's no hover and no "⋯ by default" — messages stay clean; a
+   long-press brings up the quick-reaction bar (see .msg-quick). */
+@media (hover: none) { .msg .hover-acts { display: none; } }
+
+/* long-press quick bar — 4 reactions + a "⋯ more" that opens the full menu */
+.msg-quick {
+  position: fixed; z-index: 120; display: flex; align-items: center; gap: 2px;
+  padding: 5px 6px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--line); box-shadow: var(--shadow);
+  animation: mg-bar-up .18s var(--spring);
+}
+.mq-react { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: transparent; transition: transform .16s var(--spring), background .15s; }
+.mq-react:hover, .mq-react:active { transform: scale(1.2); background: var(--accent-soft); }
+.mq-more { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; margin-left: 2px; color: var(--text-dim); background: var(--bg-3); border: 1px solid var(--line); }
 
 /* message action popover — reactions row + vertical action list (WhatsApp-style) */
 .msg-menu {
@@ -591,10 +603,12 @@ kbd {
 }
 .composer-pill:focus-within { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: 0 0 0 3px var(--accent-soft); }
 .composer-pill textarea {
-  flex: 1; min-width: 0; max-height: 130px; min-height: 38px;
+  flex: 1; min-width: 0; max-height: 120px; min-height: 38px;
   border: none; background: transparent; box-shadow: none; outline: none;
   padding: 9px 6px; resize: none; align-self: center;
+  scrollbar-width: none; /* Firefox: no scrollbar in the input */
 }
+.composer-pill textarea::-webkit-scrollbar { width: 0; height: 0; display: none; } /* Chrome/WebView */
 .composer-pill textarea:focus { box-shadow: none; }
 .pill-ic {
   flex: none; width: 38px; height: 38px; padding: 0; border-radius: 50%;

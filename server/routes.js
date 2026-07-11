@@ -79,6 +79,31 @@ api.get('/auth/config', (_req, res) => res.json({
 // https://<your-app>/api/health to confirm durable backups are actually ON.
 api.get('/health', (_req, res) => res.json({ ok: true, persist: persistStatus() }));
 
+// ICE servers for calls. STUN alone can't connect peers on many mobile/CGNAT
+// networks — that needs a TURN relay. If a (free) Metered account is configured
+// via env, we hand back its time-limited TURN credentials; otherwise we fall
+// back to the free public OpenRelay project. Cached 1h server-side.
+let _iceCache = { at: 0, servers: null };
+api.get('/ice', async (_req, res) => {
+  const stun = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+  const key = process.env.METERED_API_KEY, domain = process.env.METERED_DOMAIN;
+  if (key && domain) {
+    try {
+      if (Date.now() - _iceCache.at < 3600_000 && _iceCache.servers) return res.json({ iceServers: _iceCache.servers });
+      const r = await fetch(`https://${domain}/api/v1/turn/credentials?apiKey=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(6000) });
+      if (r.ok) {
+        const servers = await r.json();
+        if (Array.isArray(servers) && servers.length) { _iceCache = { at: Date.now(), servers: [...stun, ...servers] }; return res.json({ iceServers: _iceCache.servers }); }
+      }
+    } catch { /* fall through to public TURN */ }
+  }
+  res.json({ iceServers: [...stun,
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  ] });
+});
+
 api.post('/auth/google', async (req, res) => {
   try {
     // Two supported flows: custom-button OAuth2 (accessToken) or GSI ID token (credential)

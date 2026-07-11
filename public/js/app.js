@@ -1415,7 +1415,7 @@ async function openChat(conversationId) {
         <div class="composer-pill">
           <button class="pill-ic" id="plus-btn" title="More — photos, camera, location, poll…" aria-label="More attachments">${icon('plus', 20)}</button>
           <button class="pill-ic" id="emoji-btn" title="Emoji" aria-label="Emoji">${icon('smile', 19)}</button>
-          <textarea class="input" id="composer" rows="1" placeholder="${PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]}"></textarea>
+          <textarea class="input" id="composer" rows="1" placeholder=""></textarea>
           <button class="pill-ic" id="mood-btn" title="Tag how you mean it — the Emotion Layer" aria-label="Tag your mood">${icon('sparkle', 19)}</button>
           <button class="pill-ic" id="mic-btn" title="Record a voice note" aria-label="Record a voice note">${icon('mic', 19)}</button>
         </div>
@@ -1762,6 +1762,7 @@ function pollHtml(m) {
 
 // Reactions are IKVIZZ moods now (legacy icon kinds still render fine)
 const REACT_SET = MOOD_KINDS;
+const QUICK_REACTS = ['love', 'joy', 'hyped', 'down']; // the 4 shown on long-press
 
 function reactionsHtml(m) {
   const rs = m.reactions || [];
@@ -1824,7 +1825,7 @@ function openMsgMenu(m, anchor) {
   ].filter(Boolean).join('');
   menu.innerHTML = `<div class="mm-reacts">${reacts}</div><div class="mm-acts">${acts}</div>`;
   document.body.appendChild(menu);
-  positionMsgMenu(menu, anchor);
+  positionFloating(menu, anchor, false);
   anchor.classList.add('menu-target');
   menu.querySelectorAll('[data-mm-react]').forEach(b => b.onclick = () => {
     S.socket.emit('reaction:toggle', { messageId: m.id, kind: b.dataset.mmReact });
@@ -1835,19 +1836,43 @@ function openMsgMenu(m, anchor) {
   $('#msgs')?.addEventListener('scroll', closeMsgMenu, { once: true, passive: true });
 }
 
-function positionMsgMenu(menu, anchor) {
+/** Long-press quick bar: 4 reactions + a "⋯ more" that opens the full menu.
+ *  Shown just below the message (WhatsApp/iMessage-style). */
+function openQuickBar(m, anchor) {
+  closeMsgMenu();
+  closeReactBar();
+  const bar = document.createElement('div');
+  bar.id = 'msg-menu';          // reuse close + outside-click handling
+  bar.className = 'msg-quick';
+  bar.innerHTML = QUICK_REACTS.map(k => `<button class="mq-react" data-mq-react="${k}" title="${MOODS[k]?.label || k}">${mood(k, 26)}</button>`).join('')
+    + `<button class="mq-more" data-mq-more aria-label="More options">${icon('dots', 18)}</button>`;
+  document.body.appendChild(bar);
+  positionFloating(bar, anchor, true); // prefer below the message
+  anchor.classList.add('menu-target');
+  bar.querySelectorAll('[data-mq-react]').forEach(b => b.onclick = () => {
+    S.socket.emit('reaction:toggle', { messageId: m.id, kind: b.dataset.mqReact });
+    closeMsgMenu();
+  });
+  bar.querySelector('[data-mq-more]').onclick = () => { closeMsgMenu(); openMsgMenu(m, anchor); };
+  $('#msgs')?.addEventListener('scroll', closeMsgMenu, { once: true, passive: true });
+}
+
+/** Place a floating element next to an anchor, clamped inside the viewport and
+ *  never behind the composer. preferBelow=true tries below the anchor first. */
+function positionFloating(el, anchor, preferBelow = false) {
   const a = anchor.getBoundingClientRect();
-  const mw = menu.offsetWidth, mh = menu.offsetHeight;
-  const vw = window.innerWidth, vh = window.innerHeight, pad = 10;
-  // Never overlap the fixed composer at the bottom.
+  const mw = el.offsetWidth, mh = el.offsetHeight;
+  const vw = window.innerWidth, vh = window.innerHeight, pad = 10, topSafe = pad + 52;
   const composer = document.querySelector('.composer');
   const bottomLimit = (composer ? composer.getBoundingClientRect().top : vh) - 8;
-  let top = a.top - mh - 8;                              // prefer above the message
-  if (top < pad + 52) top = a.bottom + 8;               // no room above → below it
-  if (top + mh > bottomLimit) top = Math.max(pad + 52, bottomLimit - mh); // clamp up
-  let left = Math.min(Math.max(pad, a.left), vw - mw - pad);
-  menu.style.top = top + 'px';
-  menu.style.left = left + 'px';
+  let top;
+  if (preferBelow) { top = a.bottom + 8; if (top + mh > bottomLimit) top = a.top - mh - 8; }
+  else { top = a.top - mh - 8; if (top < topSafe) top = a.bottom + 8; }
+  top = Math.max(topSafe, Math.min(top, bottomLimit - mh)); // final clamp
+  let left = preferBelow ? (a.left + a.width / 2 - mw / 2) : a.left;
+  left = Math.min(Math.max(pad, left), vw - mw - pad);
+  el.style.top = top + 'px';
+  el.style.left = left + 'px';
 }
 
 /** Perform a message action chosen from the popover. */
@@ -2034,20 +2059,20 @@ function wireMessageNode(node, m) {
   });
   const bub = node.querySelector('.bubble');
   if (bub) {
-    let pressT = null, moved = false, longFired = false;
-    const openHere = () => openMsgMenu(m, bub);
-    const start = () => { moved = false; longFired = false; pressT = setTimeout(() => { if (!moved) { longFired = true; openHere(); if (navigator.vibrate) navigator.vibrate(12); } }, 380); };
+    // Clean by default: no "⋯". A LONG-PRESS (hold) brings up the quick-reaction
+    // bar (4 emojis + a "⋯ more"). A short tap does nothing — no accidental menus.
+    let pressT = null, moved = false, longFired = false, onInteractive = false;
+    const markTarget = e => { onInteractive = !!e.target.closest('a, button, audio, video, .att-img, [data-jump], [data-poll-opt]'); };
+    const start = () => {
+      moved = false; longFired = false;
+      pressT = setTimeout(() => { if (!moved && !onInteractive) { longFired = true; openQuickBar(m, bub); if (navigator.vibrate) navigator.vibrate(14); } }, 500);
+    };
     const cancel = () => clearTimeout(pressT);
-    bub.addEventListener('touchstart', start, { passive: true });
+    bub.addEventListener('touchstart', e => { markTarget(e); start(); }, { passive: true });
     bub.addEventListener('touchmove', () => { moved = true; cancel(); }, { passive: true });
-    bub.addEventListener('touchend', cancel);
-    bub.addEventListener('mousedown', start); bub.addEventListener('mouseup', cancel); bub.addEventListener('mouseleave', cancel);
-    // A short tap (not a long-press, not a link/media click) opens the menu.
-    bub.addEventListener('click', e => {
-      if (longFired) { longFired = false; return; }
-      if (e.target.closest('a, button, audio, video, .att-img, [data-jump], [data-poll-opt]')) return;
-      openHere();
-    });
+    bub.addEventListener('touchend', e => { cancel(); if (longFired) { e.preventDefault?.(); } });
+    bub.addEventListener('mousedown', e => { markTarget(e); start(); });
+    bub.addEventListener('mouseup', cancel); bub.addEventListener('mouseleave', cancel);
   }
   node.querySelectorAll('[data-react]').forEach(b => b.onclick = () => {
     S.socket.emit('reaction:toggle', { messageId: m.id, kind: b.dataset.react });
@@ -3091,19 +3116,24 @@ function showForward(m) {
    Voice & video calls — WebRTC, peer-to-peer. The server only relays the
    handshake; your voice and face never touch it. Includes screen share.
    ============================================================================ */
-const CALL = { pc: null, stream: null, other: null, media: 'audio', t0: 0, timer: null };
+const CALL = { pc: null, stream: null, other: null, media: 'audio', t0: 0, timer: null, connectT: null };
 // STUN discovers your public address; TURN relays media when a direct peer path
-// can't be made (common on mobile/CGNAT — the usual reason a call "won't connect").
-// OpenRelay is a free public TURN service ($0, no signup).
+// can't be made (common on mobile/CGNAT — the usual reason a long-distance call
+// "won't connect"). The server hands us the live ICE list (STUN + TURN); this is
+// the fallback if that fetch fails.
 const RTC_CFG = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
     { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
     { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
   ],
 };
+let _iceCfg = null;
+async function getIceConfig() {
+  if (_iceCfg) return _iceCfg;
+  try { const d = await api('/ice'); if (d?.iceServers?.length) _iceCfg = { iceServers: d.iceServers }; } catch { /* use fallback */ }
+  return _iceCfg || RTC_CFG;
+}
 const sig = (to, data) => S.socket.emit('call:signal', { to, data });
 
 /* Ringtone / ringback — generated live with the Web Audio API (no asset file,
@@ -3188,13 +3218,23 @@ function callUI(state, who) {
 }
 
 async function makePc(otherId) {
-  const pc = new RTCPeerConnection(RTC_CFG);
+  const pc = new RTCPeerConnection(await getIceConfig());
   pc.onicecandidate = e => { if (e.candidate) sig(otherId, { type: 'ice', candidate: e.candidate }); };
   pc.ontrack = e => { const rv = $('#rv'); if (rv && e.streams[0]) rv.srcObject = e.streams[0]; };
+  // If we can't establish a path in ~30s (restrictive network, no working relay),
+  // stop showing "connecting…" forever — tell the user plainly and end.
+  clearTimeout(CALL.connectT);
+  CALL.connectT = setTimeout(() => {
+    if (CALL.pc && CALL.pc.connectionState !== 'connected') {
+      toast('Couldn\'t connect the call — the network may be blocking it. Try Wi-Fi, or set up TURN (see DEPLOY.md).', true);
+      endCall(true);
+    }
+  }, 30000);
   pc.onconnectionstatechange = () => {
     const el = $('#call-state');
     if (pc.connectionState === 'connected' && el) {
       Ringer.stop(); // answered / media flowing → silence the ring
+      clearTimeout(CALL.connectT);
       CALL.t0 = Date.now();
       clearInterval(CALL.timer);
       CALL.timer = setInterval(() => {
@@ -3246,10 +3286,11 @@ async function acceptCall(from, fromMeta, offer, media) {
 function endCall(tellPeer) {
   Ringer.stop();
   if (tellPeer && CALL.other) sig(CALL.other, { type: 'end' });
+  clearTimeout(CALL.connectT);
   clearInterval(CALL.timer);
   CALL.pc?.close();
   CALL.stream?.getTracks().forEach(t => t.stop());
-  Object.assign(CALL, { pc: null, stream: null, other: null, t0: 0, timer: null });
+  Object.assign(CALL, { pc: null, stream: null, other: null, t0: 0, timer: null, connectT: null });
   callUI('closed');
 }
 
