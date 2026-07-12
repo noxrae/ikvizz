@@ -1534,23 +1534,35 @@ async function renderReminderBar() {
 }
 
 /* Scroll-to-bottom pill: appears when you scroll up; counts new arrivals. */
-function wireScrollPill() {
+// "Near the bottom" is relative to the visible height (half a screen), so the
+// jump-to-latest arrow only appears once you've scrolled up a real amount — and
+// never lingers when you're actually on the newest message.
+const NEAR_BOTTOM = box => (box.scrollHeight - box.scrollTop - box.clientHeight) < Math.max(220, box.clientHeight * 0.5);
+
+/** Single source of truth for the jump-to-latest arrow's visibility. */
+function refreshScrollPill() {
   const box = $('#msgs'), pill = $('#scroll-pill');
-  const nearBottom = () => box.scrollHeight - box.scrollTop - box.clientHeight < 260;
-  box.onscroll = () => {
-    if (nearBottom()) {
-      pill.hidden = true;
-      if (S.chat) { S.chat.unseenBelow = 0; S.socket.emit('conversation:read', S.chat.conversationId); }
-    } else pill.hidden = false;
-    $('#pill-count').textContent = S.chat?.unseenBelow ? `${S.chat.unseenBelow} new` : '';
-  };
-  pill.onclick = () => { scrollMsgs(); pill.hidden = true; if (S.chat) S.chat.unseenBelow = 0; };
+  if (!box || !pill) return;
+  if (NEAR_BOTTOM(box)) {
+    pill.hidden = true;
+    if (S.chat) S.chat.unseenBelow = 0;
+    const c = $('#pill-count'); if (c) c.textContent = '';
+  } else {
+    pill.hidden = false;
+    const c = $('#pill-count'); if (c) c.textContent = S.chat?.unseenBelow ? `${S.chat.unseenBelow} new` : '';
+  }
 }
 
-const msgsNearBottom = () => {
-  const box = $('#msgs');
-  return !box || box.scrollHeight - box.scrollTop - box.clientHeight < 260;
-};
+function wireScrollPill() {
+  const box = $('#msgs'), pill = $('#scroll-pill');
+  box.onscroll = () => {
+    refreshScrollPill();
+    if (NEAR_BOTTOM(box) && S.chat) S.socket.emit('conversation:read', S.chat.conversationId);
+  };
+  pill.onclick = () => scrollMsgs();
+}
+
+const msgsNearBottom = () => { const box = $('#msgs'); return !box || NEAR_BOTTOM(box); };
 
 function renderChatHead() {
   const head = $('#chat-head');
@@ -2187,7 +2199,7 @@ function appendMessage(m, scroll = true) {
   const prev = S.chat.messages[S.chat.messages.indexOf(m) - 1] || S.chat.messages[S.chat.messages.length - 2];
   box.insertAdjacentHTML('beforeend', messageHtml(m, prev));
   wireMessageNode(box.lastElementChild, m);
-  if (scroll) scrollMsgs();
+  if (scroll) scrollMsgs(); else refreshScrollPill();
 }
 
 // Close any open popovers when clicking elsewhere
