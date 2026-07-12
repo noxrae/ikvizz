@@ -77,7 +77,11 @@ api.get('/auth/config', (_req, res) => res.json({
 
 // Health + persistence status — booleans only, no secret values. Open
 // https://<your-app>/api/health to confirm durable backups are actually ON.
-api.get('/health', (_req, res) => res.json({ ok: true, persist: persistStatus() }));
+api.get('/health', (_req, res) => res.json({
+  ok: true,
+  persist: persistStatus(),
+  turn: { meteredDomain: !!process.env.METERED_DOMAIN, meteredKey: !!process.env.METERED_API_KEY },
+}));
 
 // ICE servers for calls. STUN alone can't connect peers on many mobile/CGNAT
 // networks — that needs a TURN relay. If a (free) Metered account is configured
