@@ -3122,7 +3122,15 @@ function showForward(m) {
    Voice & video calls — WebRTC, peer-to-peer. The server only relays the
    handshake; your voice and face never touch it. Includes screen share.
    ============================================================================ */
-const CALL = { pc: null, stream: null, other: null, media: 'audio', t0: 0, timer: null, connectT: null };
+const CALL = { pc: null, stream: null, other: null, media: 'audio', t0: 0, timer: null, connectT: null, pendingIce: [] };
+/** Apply any ICE candidates that arrived before we were ready (e.g. while the
+ *  call was still ringing). Without this, long-distance (TURN) paths get dropped
+ *  and the call is stuck on "connecting…". */
+async function flushPendingIce() {
+  if (!CALL.pc || !CALL.pc.remoteDescription) return;
+  const q = CALL.pendingIce; CALL.pendingIce = [];
+  for (const c of q) { try { await CALL.pc.addIceCandidate(c); } catch { /* stale */ } }
+}
 // STUN discovers your public address; TURN relays media when a direct peer path
 // can't be made (common on mobile/CGNAT — the usual reason a long-distance call
 // "won't connect"). The server hands us the live ICE list (STUN + TURN); this is
@@ -3264,7 +3272,7 @@ async function startCall(other, media) {
   if (CALL.pc) return toast('Already in a call.', true);
   const stream = await grabMedia(media);
   if (!stream) return;
-  CALL.media = media; CALL.other = other.other_id; CALL.stream = stream;
+  CALL.media = media; CALL.other = other.other_id; CALL.stream = stream; CALL.pendingIce = [];
   callUI('ringing…', other);
   Ringer.start('ringback'); // caller hears a ring while waiting for an answer
   const lv = $('#lv'); if (lv) lv.srcObject = stream;
@@ -3284,6 +3292,7 @@ async function acceptCall(from, fromMeta, offer, media) {
   CALL.pc = await makePc(from);
   stream.getTracks().forEach(t => CALL.pc.addTrack(t, stream));
   await CALL.pc.setRemoteDescription(offer);
+  await flushPendingIce(); // apply the caller's candidates buffered during ringing
   const answer = await CALL.pc.createAnswer();
   await CALL.pc.setLocalDescription(answer);
   sig(from, { type: 'answer', sdp: answer });
@@ -3296,7 +3305,7 @@ function endCall(tellPeer) {
   clearInterval(CALL.timer);
   CALL.pc?.close();
   CALL.stream?.getTracks().forEach(t => t.stop());
-  Object.assign(CALL, { pc: null, stream: null, other: null, t0: 0, timer: null, connectT: null });
+  Object.assign(CALL, { pc: null, stream: null, other: null, t0: 0, timer: null, connectT: null, pendingIce: [] });
   callUI('closed');
 }
 
@@ -3402,6 +3411,7 @@ function wireCallSignals(socket) {
     const meta = { display_name: fromName, avatar_hue: fromHue, avatar_url: fromAvatar };
     if (data.type === 'offer') {
       if (CALL.pc) return sig(from, { type: 'end' }); // busy
+      CALL.pendingIce = []; // buffer the caller's candidates until we accept
       const root = document.createElement('div');
       root.className = 'call-veil'; root.id = 'ring-veil';
       root.innerHTML = `
@@ -3421,8 +3431,11 @@ function wireCallSignals(socket) {
       setTimeout(() => { if ($('#ring-veil')) { Ringer.stop(); root.remove(); sig(from, { type: 'end' }); } }, 45000);
     } else if (data.type === 'answer') {
       await CALL.pc?.setRemoteDescription(data.sdp);
+      await flushPendingIce();
     } else if (data.type === 'ice') {
-      try { await CALL.pc?.addIceCandidate(data.candidate); } catch { /* late candidate */ }
+      // Apply now only if the connection is ready; otherwise buffer for flush.
+      if (CALL.pc && CALL.pc.remoteDescription) { try { await CALL.pc.addIceCandidate(data.candidate); } catch { /* stale */ } }
+      else (CALL.pendingIce ||= []).push(data.candidate);
     } else if (data.type === 'end') {
       Ringer.stop();
       $('#ring-veil')?.remove();
