@@ -471,6 +471,39 @@ async function boot() {
   renderShell();
   route();
   maybeInstallBanner(); // gentle first-visit nudge to install the PWA (dismissible)
+  maybeNotifPrompt();   // ask to turn on notifications (messages + calls when away)
+}
+
+/** First-run "turn on notifications" prompt — like WhatsApp asks on first open.
+ *  Enabling subscribes this device to Web Push, so messages and incoming calls
+ *  reach the phone's notification bar even when the app is closed. Shown once;
+ *  never again after the user grants it or dismisses it. */
+function maybeNotifPrompt() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  if (Notification.permission === 'granted') { initPush(false); return; } // already on → just (re)subscribe
+  if (Notification.permission === 'denied') return;                        // blocked → can't re-ask here
+  if (localStorage.getItem('aether_notif_prompted')) return;               // asked before → don't nag
+  const root = $('#palette-root');
+  const done = () => { localStorage.setItem('aether_notif_prompted', '1'); root.innerHTML = ''; };
+  root.innerHTML = `
+  <div class="palette-veil" id="np-veil"><div class="palette" style="padding:24px;max-width:380px;text-align:center">
+    <div style="opacity:.9">${icon('bell', 34, 'accent')}</div>
+    <b style="font-size:17px;display:block;margin:12px 0 6px">Turn on notifications</b>
+    <div class="faint" style="line-height:1.5;margin-bottom:18px">Get new messages and incoming calls on your phone — even when IKVIZZ is closed, just like WhatsApp. You can change this anytime in Settings.</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button class="btn" id="np-yes">${icon('bell', 15)} Enable notifications</button>
+      <button class="btn ghost small" id="np-no">Not now</button>
+    </div>
+  </div></div>`;
+  $('#np-no').onclick = done;
+  $('#np-yes').onclick = async () => {
+    const ok = await initPush(true); // requests OS permission + subscribes
+    if (ok) toast(`${icon('bell', 14, 'accent')} Notifications on — you'll get messages & calls even when the app is closed.`);
+    else if (Notification.permission === 'denied') {
+      toast('Notifications are blocked. Enable them for IKVIZZ in your browser/phone site settings, then reopen the app.', true);
+    }
+    done();
+  };
 }
 
 /** First-visit "Install IKVIZZ" banner — one tap to install (native prompt on

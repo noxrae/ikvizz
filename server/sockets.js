@@ -167,9 +167,13 @@ export function createSocketLayer(httpServer) {
         || db.prepare(`SELECT 1 FROM relationships WHERE user_id=? AND other_id=?`).get(otherId, uid);
       if (!related) return;
       const me = db.prepare(`SELECT display_name, avatar_hue, avatar_url FROM users WHERE id=?`).get(uid);
-      // Offer to someone who isn't here → a missed call they'll actually see
+      // Offer to someone who isn't here → push it so it lands in their phone's
+      // notification bar (tapping opens the app). A PWA can't pop a full-screen
+      // ringer while fully closed — that's a native-app capability — but this
+      // makes the call reach them instead of vanishing.
       if (data.type === 'offer' && !online.has(otherId)) {
-        notify(otherId, 'call', `Missed ${data.media === 'video' ? 'video' : 'voice'} call from ${me.display_name}`, '', { from: uid });
+        notify(otherId, 'call', `📞 Incoming ${data.media === 'video' ? 'video' : 'voice'} call from ${me.display_name}`,
+          'Tap to open IKVIZZ', { from: uid });
       }
       io.to(`user:${otherId}`).emit('call:signal', { from: uid, fromName: me.display_name, fromHue: me.avatar_hue, fromAvatar: me.avatar_url, data });
     });
