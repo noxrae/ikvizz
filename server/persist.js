@@ -40,7 +40,8 @@ export const persistStatus = () => ({
 const BUCKET = 'ikvizz-backups';
 const KEY = process.env.PERSIST_KEY || 'prod';
 const DB_OBJECT = `${KEY}/db/aether.db`;
-const UPLOADS_PREFIX = `${KEY}/uploads/`;
+const VAPID_OBJECT = `${KEY}/db/vapid.json`; // Web-Push keypair must be STABLE across
+const UPLOADS_PREFIX = `${KEY}/uploads/`;    // redeploys, else push subscriptions break
 const DB_NAME = 'aether.db';
 
 const headers = (extra = {}) => ({ apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, ...extra });
@@ -117,6 +118,9 @@ export async function restoreIfMissing(dataDir) {
     fs.writeFileSync(dbPath, buf);
     log(`restored database from cloud (${(buf.length / 1024).toFixed(0)} KB)`);
 
+    // Restore the Web-Push keypair so existing push subscriptions keep working.
+    try { const vb = await getObject(VAPID_OBJECT); if (vb) fs.writeFileSync(path.join(dataDir, 'vapid.json'), vb); } catch { /* regenerates if absent */ }
+
     // Restore uploaded media alongside it.
     const uploadsDir = path.join(dataDir, 'uploads');
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -144,6 +148,7 @@ export async function restoreIfMissing(dataDir) {
 const mirroredMedia = new Set(); // upload filenames already in the cloud this process
 let snapping = false;
 let lastDbMtime = 0;
+let vapidUploaded = false;
 
 async function seedMirroredMedia() {
   try { for (const n of await listObjects(UPLOADS_PREFIX)) mirroredMedia.add(n); }
@@ -167,6 +172,11 @@ export async function snapshotNow(db, dataDir, { force = false } = {}) {
       await putObject(DB_OBJECT, buf, 'application/x-sqlite3');
       lastDbMtime = mtime;
       log(`snapshot uploaded (${(buf.length / 1024).toFixed(0)} KB)`);
+    }
+    // Web-Push keypair — tiny, rarely changes; upload once per process.
+    if (!vapidUploaded) {
+      const vp = path.join(dataDir, 'vapid.json');
+      if (fs.existsSync(vp)) { try { await putObject(VAPID_OBJECT, fs.readFileSync(vp), 'application/json'); vapidUploaded = true; } catch { /* retry next tick */ } }
     }
     // Media: upload only files we haven't mirrored yet (uploads are immutable).
     const uploadsDir = path.join(dataDir, 'uploads');

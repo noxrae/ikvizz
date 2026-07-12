@@ -28,12 +28,24 @@ export function notify(userId, kind, title, body = '', data = {}) {
   ioRef?.to(`user:${userId}`).emit('notify', { id, kind, title, body, data, read: 0, created_at: at });
   mirror.notification(id);
 
-  if (!isOnlineFn(userId)) {
-    for (const s of db.prepare(`SELECT * FROM push_subs WHERE user_id=?`).all(userId)) {
-      sendPush(s, { title, body, kind, data })
-        .then(res => { if (res.gone) db.prepare(`DELETE FROM push_subs WHERE endpoint=?`).run(s.endpoint); })
-        .catch(() => { /* push service unreachable — the center still has it */ });
-    }
-  }
+  if (!isOnlineFn(userId)) pushTo(userId, { title, body, kind, data });
   return id;
+}
+
+/** Send a Web Push to every device of a user (only when they're away). Fire and
+ *  forget; dead subscriptions are pruned. Shared by notify() and pushMessage(). */
+function pushTo(userId, payload) {
+  for (const s of db.prepare(`SELECT * FROM push_subs WHERE user_id=?`).all(userId)) {
+    sendPush(s, payload)
+      .then(res => { if (res.gone) db.prepare(`DELETE FROM push_subs WHERE endpoint=?`).run(s.endpoint); })
+      .catch(() => { /* push service unreachable — nothing else to do */ });
+  }
+}
+
+/** Push for a plain chat message — a real notification when you're away, but NO
+ *  notification-center row (that would just mirror the chat list). Silent when
+ *  you're online: the socket already delivered it live. */
+export function pushMessage(userId, title, body, data = {}) {
+  if (isOnlineFn(userId)) return;
+  pushTo(userId, { title, body, kind: 'message', data });
 }

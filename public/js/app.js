@@ -2524,7 +2524,13 @@ async function showRizz(other) {
   }, 4000);
 }
 
-function scrollMsgs() { const b = $('#msgs'); if (b) b.scrollTop = b.scrollHeight; }
+function scrollMsgs() {
+  const b = $('#msgs'); if (b) b.scrollTop = b.scrollHeight;
+  // We're at the bottom now → the jump-to-latest arrow must be hidden.
+  const pill = $('#scroll-pill'); if (pill) pill.hidden = true;
+  const cnt = $('#pill-count'); if (cnt) cnt.textContent = '';
+  if (S.chat) S.chat.unseenBelow = 0;
+}
 
 /* Intent Engine (client side): stream lightweight telemetry, not keystrokes. */
 function wireComposer() {

@@ -6,7 +6,7 @@
 import { db, now, ftsIndex } from './db.js';
 import { classifyPriority, detectSignals } from './brain.js';
 import { mirror } from './cloud.js';
-import { notify } from './notify.js';
+import { notify, pushMessage } from './notify.js';
 
 export function getRelationship(userId, otherId) {
   return db.prepare(`SELECT * FROM relationships WHERE user_id=? AND other_id=?`).get(userId, otherId);
@@ -140,6 +140,26 @@ export function sendMessage({ conversationId, senderId, body, replyTo = null, ki
   if (mentionSignal) {
     for (const uid of mentionSignal.users) {
       notify(uid, 'mention', `${sender.display_name} mentioned you`, text.slice(0, 140), { conversationId });
+    }
+  }
+
+  // Every message pushes to away recipients (this is why notifications now
+  // arrive without opening the app). No notification-center row — just the
+  // push. Time capsules stay silent until they unlock; @mentioned users were
+  // already notified above, so skip them here.
+  if (!capsuleAt) {
+    const mentioned = new Set(mentionSignal?.users || []);
+    const preview = sealed ? 'Sent you a message'
+      : text ? text.slice(0, 140)
+        : att ? `Sent ${/^image\//.test(att.type || '') ? 'a photo' : 'an attachment'}`
+          : 'New message';
+    if (convo.kind === 'dm' && otherId && !mentioned.has(otherId)) {
+      pushMessage(otherId, sender.display_name, preview, { conversationId });
+    } else if (convo.kind === 'space') {
+      const sp = db.prepare(`SELECT name FROM spaces WHERE id=?`).get(convo.space_id);
+      for (const mem of db.prepare(`SELECT user_id FROM space_members WHERE space_id=? AND user_id!=?`).all(convo.space_id, senderId)) {
+        if (!mentioned.has(mem.user_id)) pushMessage(mem.user_id, `${sender.display_name} · ${sp?.name || 'Space'}`, preview, { conversationId });
+      }
     }
   }
 
