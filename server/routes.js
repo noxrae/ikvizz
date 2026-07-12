@@ -88,18 +88,30 @@ api.get('/health', (_req, res) => res.json({
 // via env, we hand back its time-limited TURN credentials; otherwise we fall
 // back to the free public OpenRelay project. Cached 1h server-side.
 let _iceCache = { at: 0, servers: null };
-api.get('/ice', async (_req, res) => {
+// Clean pasted env values (strip quotes, a stray https:// prefix, trailing slash/space).
+const clean = v => (v || '').trim().replace(/^["']|["']$/g, '').replace(/^https?:\/\//, '').replace(/\/+$/, '');
+api.get('/ice', async (req, res) => {
   const stun = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
-  const key = process.env.METERED_API_KEY, domain = process.env.METERED_DOMAIN;
+  const debug = 'debug' in req.query;
+  const domain = clean(process.env.METERED_DOMAIN), key = clean(process.env.METERED_API_KEY);
   if (key && domain) {
     try {
-      if (Date.now() - _iceCache.at < 3600_000 && _iceCache.servers) return res.json({ iceServers: _iceCache.servers });
-      const r = await fetch(`https://${domain}/api/v1/turn/credentials?apiKey=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(6000) });
+      if (!debug && Date.now() - _iceCache.at < 3600_000 && _iceCache.servers) return res.json({ iceServers: _iceCache.servers });
+      const r = await fetch(`https://${domain}/api/v1/turn/credentials?apiKey=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(8000) });
+      const txt = await r.text();
       if (r.ok) {
-        const servers = await r.json();
-        if (Array.isArray(servers) && servers.length) { _iceCache = { at: Date.now(), servers: [...stun, ...servers] }; return res.json({ iceServers: _iceCache.servers }); }
+        let servers = null; try { servers = JSON.parse(txt); } catch { /* not json */ }
+        if (Array.isArray(servers) && servers.length) {
+          _iceCache = { at: Date.now(), servers: [...stun, ...servers] };
+          return res.json({ iceServers: _iceCache.servers });
+        }
       }
-    } catch { /* fall through to public TURN */ }
+      if (debug) return res.json({ ok: false, why: 'metered responded but not usable', status: r.status, body: txt.slice(0, 300), domain });
+    } catch (e) {
+      if (debug) return res.json({ ok: false, why: 'fetch to metered failed', message: String(e?.message || e), domain });
+    }
+  } else if (debug) {
+    return res.json({ ok: false, why: 'env vars missing/empty after cleaning', hasDomain: !!domain, hasKey: !!key });
   }
   res.json({ iceServers: [...stun,
     { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
