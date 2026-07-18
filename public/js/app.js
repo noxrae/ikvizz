@@ -4200,8 +4200,8 @@ function renderMe() {
       </div>`}
       <div class="section-title" style="margin-top:0">Skin — pick your world</div>
       <div class="skin-pick" style="margin-bottom:14px">
-        ${[['pearl', 'IKVIZZ Luxe', 'champagne pearl · dark'], ['cozy', 'Digital Cozy', 'warm clay · cream'], ['off', 'Classic', 'deep space · neon']].map(([k, name, sub]) => {
-          const cur = document.documentElement.dataset.skin || 'pearl';
+        ${[['tidal', 'IKVIZZ Tidal', 'transformative teal · soft-3D'], ['pearl', 'IKVIZZ Luxe', 'champagne pearl · dark'], ['cozy', 'Digital Cozy', 'warm clay · cream'], ['off', 'Classic', 'deep space · neon']].map(([k, name, sub]) => {
+          const cur = document.documentElement.dataset.skin || 'tidal';
           return `<button class="skin-opt ${cur === k ? 'sel' : ''}" data-skin-pick="${k}"><span class="sw sw-${k}"></span><span class="txt"><b>${name}</b><small>${sub}</small></span></button>`;
         }).join('')}
       </div>
@@ -5127,13 +5127,13 @@ const savedTheme = localStorage.getItem('aether_theme');
 if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 const savedAccent = localStorage.getItem('aether_accent');
 if (savedAccent) document.documentElement.dataset.accent = savedAccent;
-// IKVIZZ Luxe (champagne pearl) is the new signature skin. Roll it out once as
-// the default — respecting any explicit choice the user makes afterwards.
-if (!localStorage.getItem('aether_skin_v3')) {
-  localStorage.setItem('aether_skin', 'pearl');
-  localStorage.setItem('aether_skin_v3', '1');
+// IKVIZZ Tidal (Transformative Teal, soft-3D) is the new signature skin. Roll it
+// out once as the default — respecting any explicit choice the user makes after.
+if (!localStorage.getItem('aether_skin_v4')) {
+  localStorage.setItem('aether_skin', 'tidal');
+  localStorage.setItem('aether_skin_v4', '1');
 }
-document.documentElement.dataset.skin = localStorage.getItem('aether_skin') || 'pearl';
+document.documentElement.dataset.skin = localStorage.getItem('aether_skin') || 'tidal';
 
 // Register the service worker for install support (independent of push, which
 // asks separately for permission). Silent if unsupported.

@@ -2162,3 +2162,73 @@ kbd {
   /* Banner sits above the tab dock on phones. */
   .install-banner { left: 12px; right: 12px; bottom: calc(82px + env(safe-area-inset-bottom)); }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TIDAL — Transformative Teal (WGSN 2026 colour of the year) + soft-3D tactile.
+   data-skin="tidal" · the new default. Deep teal-ink ground, teal→mint accents,
+   amber reserved for "hot" states, claymorphic depth on the key surfaces.
+   Additive: pearl / cozy / classic remain selectable & untouched.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root[data-skin="tidal"] {
+  --bg: #08131A; --bg-2: #0E1D26; --bg-3: #122530; --bg-hover: #16303C;
+  --line: rgba(150,230,220,.10);
+  --text: #EAF6F3; --text-dim: #8FA9A6; --text-faint: #5A716F;
+  --accent: #16C6B4; --accent-2: #7CF5C4;
+  --accent-grad: linear-gradient(135deg, #18C9B7, #0E7C7B);
+  --bubble-grad: linear-gradient(135deg, #25D3C0 0%, #12A596 100%);
+  --ring-grad: conic-gradient(from 0deg, #7CF5C4, #16C6B4, #FFB570, #7CF5C4);
+  --accent-soft: rgba(22,198,180,.14); --glow: rgba(22,198,180,.34);
+  --critical: #FF6B57; --critical-soft: rgba(255,107,87,.14);
+  --important: #FFB570; --important-soft: rgba(255,181,112,.14);
+  --interesting: #7CF5C4; --interesting-soft: rgba(124,245,196,.12);
+  --ok: #7CE39A; --ok-soft: rgba(124,227,154,.12);
+  --shadow: 0 20px 50px rgba(0,0,0,.5); --shadow-sm: 0 4px 16px rgba(0,0,0,.4);
+  --clay: 7px 9px 20px rgba(0,0,0,.45), -4px -5px 13px rgba(255,255,255,.03), inset 1px 1px 1px rgba(255,255,255,.08), inset -3px -4px 8px rgba(0,0,0,.4);
+  color-scheme: dark;
+}
+/* the whole app on a teal aurora over deep ink */
+:root[data-skin="tidal"] body {
+  background:
+    radial-gradient(1100px 640px at 88% -10%, rgba(22,198,180,.15), transparent 60%),
+    radial-gradient(900px 720px at 4% 112%, rgba(124,245,196,.06), transparent 55%),
+    linear-gradient(180deg, #0a1a22, #08131A);
+}
+/* glass surfaces */
+:root[data-skin="tidal"] .rail,
+:root[data-skin="tidal"] .side-panel { background: rgba(14,29,38,.66); backdrop-filter: blur(22px); border-color: rgba(150,230,220,.07); }
+:root[data-skin="tidal"] .convo-head { background: rgba(10,24,32,.72); backdrop-filter: blur(16px); }
+:root[data-skin="tidal"] .mobile-top { background: color-mix(in srgb, #0E1D26 88%, transparent); }
+:root[data-skin="tidal"] .mobile-tabs { background: color-mix(in srgb, #0E1D26 92%, transparent); }
+/* soft-3D cards & chips */
+:root[data-skin="tidal"] .card {
+  background: linear-gradient(150deg, rgba(255,255,255,.05), rgba(255,255,255,.012));
+  border: 1px solid rgba(150,230,220,.08); border-radius: 20px; box-shadow: var(--clay);
+}
+:root[data-skin="tidal"] .chip { background: rgba(124,245,196,.08); color: var(--text-dim); }
+/* primary buttons = teal, dark ink glyphs */
+:root[data-skin="tidal"] .btn:not(.ghost):not(.danger) { color: #052019; box-shadow: 0 8px 20px rgba(22,198,180,.32); }
+:root[data-skin="tidal"] .btn:not(.ghost):not(.danger) svg { stroke: #052019; }
+/* active nav / world pills / mobile tabs */
+:root[data-skin="tidal"] .nav-item.active { background: rgba(22,198,180,.10); color: var(--accent); box-shadow: inset 0 0 0 1px rgba(22,198,180,.26), 0 0 18px rgba(22,198,180,.08); }
+:root[data-skin="tidal"] .ws.active { background: var(--accent-grad); color: #052019; }
+:root[data-skin="tidal"] .ws.active svg { stroke: #052019; }
+:root[data-skin="tidal"] .mt-ws.active { background: var(--accent-soft); color: var(--accent); }
+/* soft-3D message bubbles + teal "mine" contrast */
+:root[data-skin="tidal"] .mglow .bubble { box-shadow: 6px 8px 18px rgba(0,0,0,.38), inset 1px 1px 1px rgba(255,255,255,.06); }
+:root[data-skin="tidal"] .msg.mine .bubble { color: #052019; }
+:root[data-skin="tidal"] .msg.mine .bubble a,
+:root[data-skin="tidal"] .msg.mine .bubble .mention,
+:root[data-skin="tidal"] .msg.mine .bubble .sig,
+:root[data-skin="tidal"] .msg.mine .bubble .reply-quote b,
+:root[data-skin="tidal"] .msg.mine .bubble .reply-quote span,
+:root[data-skin="tidal"] .msg.mine .bubble .tm { color: #052019 !important; }
+:root[data-skin="tidal"] .msg.mine .bubble .tm { opacity: .6; }
+/* fab, gradient send button, unread pill = teal, dark glyph */
+:root[data-skin="tidal"] .fab { color: #052019; }
+:root[data-skin="tidal"] .fab svg,
+:root[data-skin="tidal"] .composer .btn.round:not(.ghost) svg { stroke: #052019; }
+:root[data-skin="tidal"] .unread-pill:not(.bub) { color: #052019; }
+:root[data-skin="tidal"] .composer-pill { box-shadow: inset 2px 3px 8px rgba(0,0,0,.4); }
+:root[data-skin="tidal"] .send { --map-you: #16C6B4; }
+/* skin-picker swatch */
+.sw-tidal { background: linear-gradient(140deg, #25D3C0, #0E7C7B) !important; }
