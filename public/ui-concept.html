@@ -3,157 +3,315 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>IKVIZZ — Pick your direction</title>
+<title>IKVIZZ — Soft Matter</title>
 <meta name="color-scheme" content="dark">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  :root{ --bg:#0C0C0F; --bg2:#141419; --line:rgba(255,255,255,.10); --tx:#F4F4F6; --tx2:#9B9BA6; --tx3:#6B6B77;
-    --font:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif; }
+  :root{
+    --bg:#0B0B10; --bg2:#111119; --clay:#181822; --clay-2:#1E1E2A;
+    --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+    --tx:#F3F3F8; --tx2:#9EA0B0; --tx3:#606274;
+    /* oil-slick holo, biased cool→gold so it never reads purple/pink */
+    --holo:linear-gradient(115deg,#8DEBDF 0%,#7FC0FF 34%,#A9F2C8 60%,#FFE3A6 100%);
+    --holo-soft:linear-gradient(115deg,rgba(141,235,223,.20),rgba(127,192,255,.16),rgba(255,227,166,.16));
+    --aqua:#5FE6D2;
+    --clay-shadow:8px 10px 22px rgba(0,0,0,.55), -5px -6px 16px rgba(255,255,255,.035),
+                  inset 1px 1px 1px rgba(255,255,255,.11), inset -3px -4px 8px rgba(0,0,0,.45);
+    --clay-press:4px 5px 12px rgba(0,0,0,.5), inset 2px 3px 7px rgba(0,0,0,.55), inset -1px -1px 2px rgba(255,255,255,.05);
+    --glass:rgba(255,255,255,.055);
+    --spring:cubic-bezier(.34,1.56,.64,1);
+    --font:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  }
   html{scroll-behavior:smooth}
-  body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.55;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .bgmesh{position:fixed;inset:-20%;z-index:0;filter:blur(90px);opacity:.5;pointer-events:none;
+    background:
+      radial-gradient(38vw 38vw at 18% 12%,rgba(127,192,255,.22),transparent 60%),
+      radial-gradient(34vw 34vw at 85% 22%,rgba(141,235,223,.18),transparent 60%),
+      radial-gradient(40vw 40vw at 60% 92%,rgba(255,227,166,.14),transparent 60%);}
+  .wrap{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:0 22px}
 
-  header{padding:56px 0 30px;text-align:center;border-bottom:1px solid var(--line)}
-  .kick{font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--tx3);margin-bottom:16px}
-  h1{font-size:clamp(30px,6vw,52px);font-weight:800;letter-spacing:-.03em;line-height:1.02;text-wrap:balance}
-  .lede{max-width:600px;margin:16px auto 0;color:var(--tx2);font-size:clamp(14px,2vw,17px)}
+  /* top */
+  .top{position:sticky;top:0;z-index:60;backdrop-filter:blur(20px) saturate(1.3);
+    background:rgba(11,11,16,.55);border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex;align-items:center;gap:13px;height:62px}
+  .mk{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--holo);flex:none;
+    box-shadow:var(--clay-shadow)}
+  .mk svg{width:18px;height:18px;stroke:#0B0B10;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .bd{font-weight:800;letter-spacing:.13em;font-size:16px}
+  .tg{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tx2);
+    padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line)}
 
-  .facts{max-width:820px;margin:26px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .fact{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;text-align:left}
-  .fact b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em}
-  .fact span{font-size:12px;color:var(--tx3)}
+  /* hero */
+  .hero{padding:60px 0 24px;text-align:center;position:relative}
+  .orbwrap{perspective:900px;margin:0 auto 6px;width:220px;height:220px}
+  .orb{width:100%;height:100%;border-radius:50%;position:relative;transform-style:preserve-3d;
+    animation:float 7s ease-in-out infinite;will-change:transform}
+  .orb .core{position:absolute;inset:0;border-radius:50%;
+    background:
+      radial-gradient(circle at 32% 26%,rgba(255,255,255,.95),rgba(255,255,255,.15) 18%,transparent 40%),
+      radial-gradient(circle at 70% 78%,rgba(0,0,0,.45),transparent 55%),
+      var(--holo);
+    background-blend-mode:screen,multiply,normal;
+    box-shadow:0 40px 80px rgba(127,192,255,.30), inset -18px -22px 46px rgba(0,0,0,.5),
+               inset 14px 16px 40px rgba(255,255,255,.35);}
+  .orb .sheen{position:absolute;inset:0;border-radius:50%;mix-blend-mode:screen;opacity:.65;
+    background:conic-gradient(from 0deg,#8DEBDF,#7FC0FF,#A9F2C8,#FFE3A6,#8DEBDF);
+    animation:spin 9s linear infinite;filter:blur(2px)}
+  .orb .glint{position:absolute;top:16%;left:20%;width:34%;height:22%;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.9),transparent 70%);filter:blur(2px)}
+  @keyframes float{0%,100%{transform:translateY(0) rotateX(6deg) rotateY(-6deg)}50%{transform:translateY(-16px) rotateX(-4deg) rotateY(6deg)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .eyebrow{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--aqua);margin:8px 0 14px}
+  h1{font-size:clamp(38px,7.5vw,78px);line-height:.98;font-weight:800;letter-spacing:-.035em;text-wrap:balance}
+  h1 .g{background:var(--holo);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{max-width:600px;margin:20px auto 0;color:var(--tx2);font-size:clamp(15px,2.1vw,18.5px)}
 
-  .lead{padding:38px 0 10px;text-align:center}
-  .lead h2{font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:-.02em}
-  .lead p{color:var(--tx2);margin-top:8px;font-size:14.5px}
+  section{padding:58px 0;position:relative}
+  .sh{display:flex;align-items:flex-end;gap:16px;margin-bottom:32px;flex-wrap:wrap}
+  .sn{font-size:13px;font-weight:800;color:var(--aqua);letter-spacing:.2em}
+  .st{font-size:clamp(26px,4vw,42px);font-weight:800;letter-spacing:-.025em;line-height:1.03}
+  .sd{color:var(--tx2);max-width:430px;margin-left:auto;font-size:14.5px}
 
-  .opts{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;padding:26px 0 10px}
-  @media (max-width:820px){ .opts{grid-template-columns:1fr} .facts{grid-template-columns:1fr} }
+  /* material demos */
+  .mat{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:820px){.mat{grid-template-columns:1fr}}
+  .tile{border-radius:28px;padding:30px;position:relative;overflow:hidden;transform-style:preserve-3d;transition:transform .3s var(--spring)}
+  .tile.clay{background:linear-gradient(150deg,#20202c,#141420);box-shadow:var(--clay-shadow)}
+  .tile.glass{background:var(--glass);backdrop-filter:blur(24px) saturate(1.5);border:1px solid var(--line2)}
+  .tile.glass::before{content:"";position:absolute;inset:0;border-radius:28px;padding:1px;pointer-events:none;
+    background:linear-gradient(140deg,rgba(255,255,255,.5),transparent 40%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+  .tile h3{font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
+  .tile p{color:var(--tx2);font-size:14px;margin-bottom:20px}
+  .demo-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .clay-btn{border:none;font-family:inherit;font-weight:800;font-size:15px;color:var(--tx);cursor:pointer;
+    padding:14px 24px;border-radius:20px;background:linear-gradient(150deg,#262633,#191922);box-shadow:var(--clay-shadow);
+    transition:transform .22s var(--spring),box-shadow .22s}
+  .clay-btn:hover{transform:translateY(-3px) scale(1.03)}
+  .clay-btn:active{transform:translateY(1px) scale(.98);box-shadow:var(--clay-press)}
+  .clay-btn.holo{background:var(--holo);color:#0B0B10}
+  .glass-pill{padding:13px 20px;border-radius:999px;background:var(--glass);border:1px solid var(--line2);
+    backdrop-filter:blur(14px);font-size:14px;color:var(--tx2)}
+  .chip3d{display:inline-grid;place-items:center;width:60px;height:60px;border-radius:20px;font-size:26px;
+    background:linear-gradient(150deg,#242430,#16161f);box-shadow:var(--clay-shadow);cursor:pointer;
+    transition:transform .2s var(--spring)}
+  .chip3d:hover{transform:translateY(-4px) scale(1.08) rotate(-4deg)}
+  .chip3d:active{transform:scale(.9)}
 
-  .opt{border:1px solid var(--line);border-radius:24px;overflow:hidden;background:var(--bg2);display:flex;flex-direction:column}
-  .opt-top{display:flex;align-items:center;gap:12px;padding:18px 20px}
-  .num{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none}
-  .opt-top .nm{font-size:18px;font-weight:800;letter-spacing:-.01em}
-  .opt-top .vibe{font-size:12px;color:var(--tx3);font-weight:600}
-  .dots{margin-left:auto;display:flex;gap:6px}
-  .d{width:20px;height:20px;border-radius:6px;border:1px solid rgba(255,255,255,.14)}
+  /* phones */
+  .phones{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:40px 28px;justify-items:center}
+  .pcol{display:flex;flex-direction:column;align-items:center;gap:16px;perspective:1400px}
+  .phone{width:300px;max-width:100%;height:640px;border-radius:46px;padding:12px;flex:none;
+    background:linear-gradient(160deg,#2a2a38,#0e0e16);
+    box-shadow:0 40px 90px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(255,255,255,.06);
+    transition:transform .4s var(--spring);transform-style:preserve-3d}
+  .screen{width:100%;height:100%;border-radius:35px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;position:relative}
+  .pcap{font-size:13px;color:var(--tx2);text-align:center}.pcap b{display:block;color:var(--tx);font-size:15px;font-weight:800;margin-bottom:2px}
 
-  /* mini preview — a tiny chat rendered in that direction's palette */
-  .prev{padding:18px 20px 20px;display:flex;flex-direction:column;gap:9px}
-  .pv-head{display:flex;align-items:center;gap:9px;padding-bottom:10px;margin-bottom:2px;border-bottom:1px solid rgba(255,255,255,.06)}
-  .pv-av{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:13px}
-  .pv-nm{font-weight:700;font-size:13.5px}
-  .pv-st{font-size:10.5px;font-weight:700}
-  .b{max-width:80%;padding:9px 13px;border-radius:15px;font-size:13px;line-height:1.35}
-  .b.them{align-self:flex-start;border-bottom-left-radius:5px}
-  .b.me{align-self:flex-end;border-bottom-right-radius:5px;font-weight:600}
-  .rx{align-self:flex-end;font-size:11px;border-radius:999px;padding:2px 8px;margin-top:-3px}
-  .pv-comp{display:flex;align-items:center;gap:8px;margin-top:6px}
-  .pv-pill{flex:1;border-radius:999px;padding:8px 12px;font-size:11.5px}
-  .pv-send{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:14px;font-weight:800}
-  .why{padding:0 20px 20px;font-size:12.5px;color:var(--tx2)}
-  .why b{color:var(--tx)}
+  .sb{display:flex;justify-content:space-between;padding:13px 20px 4px;font-size:11px;font-weight:700;color:var(--tx2)}
+  .ghead{display:flex;align-items:center;gap:10px;padding:8px 15px 12px;
+    background:rgba(255,255,255,.04);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+  .porb{width:40px;height:40px;border-radius:50%;flex:none;position:relative;
+    background:radial-gradient(circle at 34% 28%,#fff,transparent 42%),var(--holo);
+    box-shadow:inset -6px -7px 14px rgba(0,0,0,.4),0 6px 14px rgba(127,192,255,.35)}
+  .porb.sm{width:30px;height:30px}
+  .ghead .nm{font-weight:800;font-size:15px}.ghead .stt{font-size:11px;color:var(--aqua);font-weight:700}
+  .gact{margin-left:auto;display:flex;gap:8px}
+  .gbtn{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;color:var(--tx2);
+    background:linear-gradient(150deg,#20202c,#15151e);box-shadow:var(--clay-shadow)}
+  .gbtn svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
 
-  .foot{padding:44px 0 80px;text-align:center}
-  .foot .box{max-width:600px;margin:0 auto;background:var(--bg2);border:1px solid var(--line);border-radius:22px;padding:26px}
-  .foot h3{font-size:20px;font-weight:800;margin-bottom:8px}
-  .foot p{color:var(--tx2);font-size:14.5px}
-  .foot .pick{display:inline-block;margin-top:6px;font-size:13px;color:var(--tx3)}
+  .cbody{flex:1;overflow:hidden;padding:16px 14px;display:flex;flex-direction:column;gap:11px}
+  .peb{max-width:78%;padding:12px 15px;border-radius:22px;font-size:13.5px;line-height:1.35;position:relative}
+  .peb.them{align-self:flex-start;border-bottom-left-radius:8px;
+    background:linear-gradient(150deg,#22222e,#171720);box-shadow:var(--clay-shadow);color:var(--tx)}
+  .peb.me{align-self:flex-end;border-bottom-right-radius:8px;color:#08110f;font-weight:650;
+    background:var(--holo);box-shadow:0 12px 26px rgba(127,192,255,.32),inset 0 1px 2px rgba(255,255,255,.6)}
+  .peb .tm{display:block;font-size:10px;opacity:.55;margin-top:5px}
+  .rxn{align-self:flex-end;margin-top:-6px;font-size:13px;padding:4px 10px;border-radius:999px;
+    background:linear-gradient(150deg,#20202c,#16161f);box-shadow:var(--clay-shadow)}
+  .quick{align-self:flex-end;display:flex;gap:5px;padding:7px 9px;border-radius:999px;
+    background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--line2);box-shadow:0 14px 30px rgba(0,0,0,.5)}
+  .quick span{font-size:20px}
+  .quick .m{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--tx2);background:rgba(255,255,255,.06)}
+
+  .comp{display:flex;align-items:center;gap:10px;padding:10px 12px 15px}
+  .cpill{flex:1;display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:999px;
+    background:linear-gradient(150deg,#1c1c26,#141420);box-shadow:var(--clay-press)}
+  .cpill svg{width:18px;height:18px;stroke:var(--tx3);stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .cpill .ph{flex:1;font-size:13px;color:var(--tx3)}
+  .csend{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--holo);
+    box-shadow:0 10px 24px rgba(127,192,255,.4),inset 0 1px 2px rgba(255,255,255,.6)}
+  .csend svg{width:19px;height:19px;stroke:#08110f;stroke-width:2.3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+  /* people mock */
+  .pbody{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+  .ptitle{font-size:24px;font-weight:800;letter-spacing:-.02em;padding:2px 4px}
+  .seg{display:flex;gap:5px;padding:5px;border-radius:999px;background:linear-gradient(150deg,#1a1a24,#131320);box-shadow:var(--clay-press)}
+  .seg span{flex:1;text-align:center;font-size:12px;font-weight:700;padding:8px;border-radius:999px;color:var(--tx3)}
+  .seg span.on{background:var(--holo);color:#0B0B10;box-shadow:0 6px 14px rgba(127,192,255,.3)}
+  .prow{display:flex;align-items:center;gap:12px;padding:13px;border-radius:20px;
+    background:linear-gradient(150deg,#1b1b25,#141420);box-shadow:var(--clay-shadow)}
+  .prow .nm{font-weight:700;font-size:14px}.prow .ls{font-size:11.5px;color:var(--tx3)}
+  .lvl{margin-left:auto;text-align:right}.lvl .t{font-size:10px;color:var(--aqua);font-weight:800;letter-spacing:.06em}
+  .lvl .bar{width:56px;height:6px;border-radius:99px;background:rgba(0,0,0,.4);margin-top:4px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+  .lvl .bar i{display:block;height:100%;background:var(--holo);border-radius:99px}
+  .pill-badge{margin-left:auto;min-width:22px;height:22px;padding:0 7px;border-radius:99px;font-size:11px;font-weight:800;
+    display:grid;place-items:center;background:var(--holo);color:#0B0B10}
+
+  /* signature moves */
+  .moves{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+  .mv{border-radius:24px;padding:24px;background:linear-gradient(150deg,#181820,#101017);box-shadow:var(--clay-shadow)}
+  .mv .em{font-size:30px;margin-bottom:12px;display:inline-block}
+  .mv h4{font-size:16.5px;font-weight:800;margin-bottom:6px}
+  .mv p{font-size:13.5px;color:var(--tx2)}
+
+  .foot{padding:56px 0 96px;text-align:center}
+  .foot .box{max-width:640px;margin:0 auto;border-radius:28px;padding:30px;
+    background:var(--glass);backdrop-filter:blur(24px);border:1px solid var(--line2)}
+  .foot h3{font-size:23px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px}
+  .foot p{color:var(--tx2);font-size:15px}
+  .foot .em{font-size:12px;color:var(--tx3);margin-top:12px}
+
+  @media (prefers-reduced-motion:reduce){.orb,.orb .sheen{animation:none}}
 </style>
 </head>
 <body>
-<header><div class="wrap">
-  <div class="kick">IKVIZZ · UI direction · round 2</div>
-  <h1>Pick the vibe.<br>Then I build it for real.</h1>
-  <p class="lede">Researched from what young users actually gravitate to in 2026 — dark-first, calm and clean, with <b>one</b> signature colour that pops (not a rainbow). Four honest directions below. No purple this time. 😅</p>
-  <div class="facts">
-    <div class="fact"><b>73%</b><span>of Gen-Z prefer dark mode — so all four are dark-first</span></div>
-    <div class="fact"><b>1</b><span>bold accent, not many — clean beats loud for daily use</span></div>
-    <div class="fact"><b>Calm</b><span>minimalism = higher retention; every element earns its place</span></div>
-  </div>
+<div class="bgmesh"></div>
+
+<div class="top"><div class="wrap">
+  <div class="mk"><svg viewBox="0 0 24 24"><path d="M12 3.2 20.2 20H3.8L12 3.2Z"/><path d="M7.4 14.2h9.2"/></svg></div>
+  <span class="bd">IKVIZZ</span>
+  <span class="tg">Soft Matter · concept v3</span>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="orbwrap" data-tilt><div class="orb"><div class="core"></div><div class="sheen"></div><div class="glint"></div></div></div>
+  <div class="eyebrow">A new material for chat</div>
+  <h1>Chat you can<br><span class="g">almost touch.</span></h1>
+  <p class="sub">Not flat. Not another dark theme. <b>Soft Matter</b> is a living material — liquid glass that refracts light, meets clay that squishes when you press it. Every message is a soft 3D pebble. Every friend has a pearl that's alive. Depth you can feel, not just see.</p>
 </div></header>
 
-<div class="lead"><div class="wrap">
-  <h2>Choose 1, 2, 3 or 4</h2>
-  <p>Each is shown on a real mini-chat so you can see how your app would feel.</p>
-</div></div>
-
-<div class="wrap"><div class="opts">
-
-  <!-- 1 — Electric Blue -->
-  <div class="opt" style="--ac:#4F8CFF;--ac2:#2F6BFF;--ink:#0B0E16;--sur:#161B26;--txp:#EAF0FF;--txs:#8A93A6">
-    <div class="opt-top">
-      <span class="num" style="background:#4F8CFF;color:#08101f">1</span>
-      <div><div class="nm">Midnight Blue</div><div class="vibe">premium · calm · trustworthy</div></div>
-      <div class="dots"><span class="d" style="background:#0B0E16"></span><span class="d" style="background:#161B26"></span><span class="d" style="background:#4F8CFF"></span></div>
+<!-- MATERIAL -->
+<section><div class="wrap">
+  <div class="sh"><span class="sn">01</span><div><div class="st">The material</div></div>
+    <p class="sd">Two 2026 materials fused: Apple's Liquid Glass (depth, refraction) + Claymorphism (soft, tactile 3D). Hover them — they respond.</p></div>
+  <div class="mat">
+    <div class="tile clay" data-tilt>
+      <h3>Liquid Clay 🫧</h3>
+      <p>Buttons that look pressable — puffy, matte, with inner + outer shadow. Spring-bounce on tap. Your brain reads them faster than a flat rectangle.</p>
+      <div class="demo-row">
+        <button class="clay-btn holo">Send it ✦</button>
+        <button class="clay-btn">Maybe later</button>
+      </div>
     </div>
-    <div class="prev" style="background:#0B0E16;color:#EAF0FF">
-      <div class="pv-head"><div class="pv-av" style="background:#4F8CFF;color:#08101f">D</div><div><div class="pv-nm">Dhoni</div><div class="pv-st" style="color:#4F8CFF">● online</div></div></div>
-      <div class="b them" style="background:#161B26;color:#EAF0FF">yo the drop is insane 👀</div>
-      <div class="b me" style="background:#4F8CFF;color:#08101f">on my way rn 🔥</div>
-      <div class="rx" style="background:#161B26;color:#8A93A6">🔥 2</div>
-      <div class="pv-comp"><div class="pv-pill" style="background:#161B26;color:#8A93A6">message…</div><div class="pv-send" style="background:#4F8CFF;color:#08101f">➤</div></div>
+    <div class="tile glass" data-tilt>
+      <h3>Liquid Glass 🔮</h3>
+      <p>Translucent panels that let light and colour bend through. They float above content and recede so your words stay the hero.</p>
+      <div class="demo-row">
+        <span class="glass-pill">frosted panel</span>
+        <span class="chip3d">🔥</span><span class="chip3d">😂</span><span class="chip3d">❤️</span>
+      </div>
     </div>
-    <div class="why"><b>Why:</b> the Revolut/Apple-clean look — feels expensive and effortless. Blue is calm and universally liked, ages well.</div>
   </div>
+</div></section>
 
-  <!-- 2 — Cyber Lime -->
-  <div class="opt">
-    <div class="opt-top">
-      <span class="num" style="background:#C6FF3D;color:#0d1400">2</span>
-      <div><div class="nm">Cyber Lime</div><div class="vibe">gaming · high-energy · loud</div></div>
-      <div class="dots"><span class="d" style="background:#0B0F0A"></span><span class="d" style="background:#171C12"></span><span class="d" style="background:#C6FF3D"></span></div>
+<!-- SCREENS -->
+<section><div class="wrap">
+  <div class="sh"><span class="sn">02</span><div><div class="st">Your app, in Soft Matter</div></div>
+    <p class="sd">Same features you built — dressed in a material no other chat app has. Tilt your phone; the depth is real.</p></div>
+  <div class="phones">
+
+    <div class="pcol">
+      <div class="phone" data-tilt><div class="screen">
+        <div class="sb"><span>9:41</span><span>📶 🔋 82%</span></div>
+        <div class="ghead">
+          <div class="gbtn"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></div>
+          <div class="porb"></div>
+          <div><div class="nm">Dhoni</div><div class="stt">● vibing · lvl 3</div></div>
+          <div class="gact"><div class="gbtn"><svg viewBox="0 0 24 24"><path d="M4 5c0 9 6 15 15 15v-3.5l-4-1.5-2 2a12 12 0 0 1-6-6l2-2L7.5 5 4 5Z"/></svg></div>
+            <div class="gbtn"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="m16 10 5-3v10l-5-3"/></svg></div></div>
+        </div>
+        <div class="cbody">
+          <div class="peb them">yo the drop is actually insane 👀<span class="tm">9:07</span></div>
+          <div class="peb me">on my way rn 🔥<span class="tm">9:07</span></div>
+          <div class="rxn">🔥 2</div>
+          <div class="peb them">the whole gc is losing it 💀<span class="tm">9:09</span></div>
+          <div class="quick"><span>❤️</span><span>😂</span><span>🔥</span><span>😭</span><div class="m"><svg width="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></div></div>
+        </div>
+        <div class="comp">
+          <div class="cpill"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="ph">message…</span><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></div>
+          <div class="csend"><svg viewBox="0 0 24 24"><path d="M20 4 3 11l6 2 2 6 9-15Z"/></svg></div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Chat</b>Pebble messages, clay composer, glass quick-react.</div>
     </div>
-    <div class="prev" style="background:#0B0F0A;color:#EAF3E0">
-      <div class="pv-head"><div class="pv-av" style="background:#C6FF3D;color:#0d1400">D</div><div><div class="pv-nm">Dhoni</div><div class="pv-st" style="color:#C6FF3D">● online</div></div></div>
-      <div class="b them" style="background:#171C12;color:#EAF3E0">yo the drop is insane 👀</div>
-      <div class="b me" style="background:#C6FF3D;color:#0d1400">on my way rn 🔥</div>
-      <div class="rx" style="background:#171C12;color:#9aa88a">🔥 2</div>
-      <div class="pv-comp"><div class="pv-pill" style="background:#171C12;color:#9aa88a">message…</div><div class="pv-send" style="background:#C6FF3D;color:#0d1400">➤</div></div>
+
+    <div class="pcol">
+      <div class="phone" data-tilt><div class="screen">
+        <div class="sb"><span>9:41</span><span>📶 🔋 81%</span></div>
+        <div class="ghead" style="border:none"><div class="ptitle" style="margin-right:auto">people</div><div class="gbtn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></div><div class="porb sm"></div></div>
+        <div class="pbody">
+          <div class="seg"><span class="on">Besties</span><span>Waiting</span><span>Streaks</span></div>
+          <div class="prow"><div class="porb"></div><div><div class="nm">Dhoni Samkaran</div><div class="ls">voice note · 2m</div></div><div class="lvl"><div class="t">LV 3</div><div class="bar"><i style="width:62%"></i></div></div></div>
+          <div class="prow"><div class="porb"></div><div><div class="nm">Rahul</div><div class="ls">typing…</div></div><span class="pill-badge">3</span></div>
+          <div class="prow"><div class="porb"></div><div><div class="nm">Maya</div><div class="ls">🔥 14 day streak</div></div><div class="lvl"><div class="t">LV 5</div><div class="bar"><i style="width:88%"></i></div></div></div>
+          <div class="prow" style="justify-content:center;color:var(--tx3);font-size:12.5px;box-shadow:var(--clay-press)">＋ add a human — a universe grows from one star</div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>People</b>Every friend is a living Vibe Pearl — its glow grows with your bond.</div>
     </div>
-    <div class="why"><b>Why:</b> Spotify/Duolingo/gamer energy — electric lime on black screams "young & alive." Boldest of the four.</div>
+
   </div>
+</div></section>
 
-  <!-- 3 — Sunset Warm -->
-  <div class="opt">
-    <div class="opt-top">
-      <span class="num" style="background:#FF7A4D;color:#2a1206">3</span>
-      <div><div class="nm">Sunset Warm</div><div class="vibe">cozy · friendly · inviting</div></div>
-      <div class="dots"><span class="d" style="background:#141017"></span><span class="d" style="background:#211a24"></span><span class="d" style="background:#FF7A4D"></span></div>
-    </div>
-    <div class="prev" style="background:#141017;color:#F5ECE6">
-      <div class="pv-head"><div class="pv-av" style="background:linear-gradient(135deg,#FF7A4D,#FFB020);color:#2a1206">D</div><div><div class="pv-nm">Dhoni</div><div class="pv-st" style="color:#FFB020">● online</div></div></div>
-      <div class="b them" style="background:#211a24;color:#F5ECE6">yo the drop is insane 👀</div>
-      <div class="b me" style="background:linear-gradient(135deg,#FF7A4D,#FF9A5C);color:#2a1206">on my way rn 🔥</div>
-      <div class="rx" style="background:#211a24;color:#b39a8e">🔥 2</div>
-      <div class="pv-comp"><div class="pv-pill" style="background:#211a24;color:#b39a8e">message…</div><div class="pv-send" style="background:linear-gradient(135deg,#FF7A4D,#FFB020);color:#2a1206">➤</div></div>
-    </div>
-    <div class="why"><b>Why:</b> warm dark + a sunset-coral pop feels human and cozy (Insta-warm), not cold or corporate. Closest in spirit to your current champagne, but younger.</div>
+<!-- SIGNATURE MOVES -->
+<section><div class="wrap">
+  <div class="sh"><span class="sn">03</span><div><div class="st">The moves nobody else has</div></div></div>
+  <div class="moves">
+    <div class="mv"><span class="em">🔮</span><h4>The Vibe Pearl</h4><p>Each friend is a 3D pearl that shifts colour with their mood and grows brighter as your Relationship DNA levels up. Your avatar, alive.</p></div>
+    <div class="mv"><span class="em">👆</span><h4>Squish to react</h4><p>Press a message and the reaction bubbles physically squish and pop with spring physics — a tiny hit of joy every tap.</p></div>
+    <div class="mv"><span class="em">📱</span><h4>Real depth</h4><p>Tilt the phone and glass layers parallax over the clay beneath. The interface has a floor, a mid, and a top — like a real object.</p></div>
+    <div class="mv"><span class="em">🌊</span><h4>Liquid motion</h4><p>Nothing snaps. Panels melt in, bubbles settle with weight, the send button ripples. Buttery, weighty, alive.</p></div>
   </div>
+</div></section>
 
-  <!-- 4 — Mono Brutalist + Yellow -->
-  <div class="opt">
-    <div class="opt-top">
-      <span class="num" style="background:#EEFF41;color:#111">4</span>
-      <div><div class="nm">Bold Mono</div><div class="vibe">honest · high-contrast · statement</div></div>
-      <div class="dots"><span class="d" style="background:#0A0A0A"></span><span class="d" style="background:#FFFFFF"></span><span class="d" style="background:#EEFF41"></span></div>
-    </div>
-    <div class="prev" style="background:#0A0A0A;color:#FFFFFF">
-      <div class="pv-head"><div class="pv-av" style="background:#EEFF41;color:#111">D</div><div><div class="pv-nm">Dhoni</div><div class="pv-st" style="color:#EEFF41">● online</div></div></div>
-      <div class="b them" style="background:#171717;color:#fff;border:1px solid #2a2a2a">yo the drop is insane 👀</div>
-      <div class="b me" style="background:#fff;color:#0A0A0A">on my way rn 🔥</div>
-      <div class="rx" style="background:#171717;color:#aaa;border:1px solid #2a2a2a">🔥 2</div>
-      <div class="pv-comp"><div class="pv-pill" style="background:#171717;color:#888;border:1px solid #2a2a2a">message…</div><div class="pv-send" style="background:#EEFF41;color:#111">➤</div></div>
-    </div>
-    <div class="why"><b>Why:</b> neo-brutalist black/white with a yellow jolt — reads as "honest & transparent," values Gen-Z loves. Most distinctive, least like everyone else.</div>
-  </div>
+<footer class="foot"><div class="wrap"><div class="box">
+  <h3>This the one? 🔮</h3>
+  <p>If Soft Matter is the evolution you meant, say <b>"build it"</b> and I'll bring it into the real app screen-by-screen — Chat first. Want to steer the signature colour (right now it's a cool oil-slick holo)? Name any hue and I'll retune the material. Want it calmer or even bolder? Tell me and I'll respin.</p>
+  <div class="em">Grounded in 2026 research: Apple Liquid Glass (iOS 26), Claymorphism, spatial/tactile UI.</div>
+</div></div></footer>
 
-</div></div>
-
-<div class="foot"><div class="wrap"><div class="box">
-  <h3>Just reply with a number ✦</h3>
-  <p>Tell me <b>1, 2, 3 or 4</b> and I'll build the full detailed concept in that direction — every screen, calm and clean. Want a colour you don't see here (a specific blue, green, red, etc.)? Just name it and I'll add it.</p>
-  <span class="pick">You can also mix: e.g. "3 but with the mint from before" — I'll adapt.</span>
-</div></div></div>
+<script>
+  // Pointer-tilt parallax on [data-tilt] elements — subtle, spring-eased, reduced-motion aware.
+  if(!matchMedia('(prefers-reduced-motion:reduce)').matches){
+    const els=[...document.querySelectorAll('[data-tilt]')];
+    let raf=0;
+    function onMove(e){
+      const px=(e.touches?e.touches[0].clientX:e.clientX), py=(e.touches?e.touches[0].clientY:e.clientY);
+      if(raf) return;
+      raf=requestAnimationFrame(()=>{
+        raf=0;
+        for(const el of els){
+          const r=el.getBoundingClientRect();
+          if(r.bottom<0||r.top>innerHeight){el.style.transform='';continue;}
+          const cx=r.left+r.width/2, cy=r.top+r.height/2;
+          const dx=Math.max(-1,Math.min(1,(px-cx)/(innerWidth/2)));
+          const dy=Math.max(-1,Math.min(1,(py-cy)/(innerHeight/2)));
+          const amt=el.classList.contains('orbwrap')?12:6;
+          el.style.transform=`perspective(900px) rotateY(${dx*amt}deg) rotateX(${-dy*amt}deg)`;
+        }
+      });
+    }
+    addEventListener('mousemove',onMove,{passive:true});
+    addEventListener('deviceorientation',ev=>{
+      if(ev.gamma==null) return;
+      const dx=Math.max(-1,Math.min(1,ev.gamma/30)), dy=Math.max(-1,Math.min(1,(ev.beta-45)/30));
+      for(const el of els){const amt=el.classList.contains('orbwrap')?12:6;
+        el.style.transform=`perspective(900px) rotateY(${dx*amt}deg) rotateX(${-dy*amt}deg)`;}
+    },{passive:true});
+  }
+</script>
 </body>
 </html>
