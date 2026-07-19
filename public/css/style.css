@@ -2232,3 +2232,38 @@ kbd {
 :root[data-skin="tidal"] .send { --map-you: #16C6B4; }
 /* skin-picker swatch */
 .sw-tidal { background: linear-gradient(140deg, #25D3C0, #0E7C7B) !important; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MOOD CHATS (Gen-Z layer, from the Pulse concept) — works in every skin.
+   · Kinetic messages: each bubble animates once, to its emotion.
+   · Breathing ambient: the message canvas tints toward the room's mood.
+   · Living avatars: a soft accent glow so people feel present.
+   ════════════════════════════════════════════════════════════════════════════ */
+.msgs { transition: background-color 2.2s ease; }
+
+.bubble.kin-pop     { animation: kin-pop .5s var(--spring) both; }
+@keyframes kin-pop  { 0%{transform:scale(.9) translateY(6px);opacity:0} 55%{transform:scale(1.04)} 100%{transform:none;opacity:1} }
+.bubble.kin-beat    { animation: kin-beat .7s var(--ease) both; }
+@keyframes kin-beat { 0%{transform:scale(.96);opacity:0} 30%{opacity:1} 45%{transform:scale(1.05)} 70%{transform:scale(.99)} 100%{transform:none} }
+.bubble.kin-big     { animation: kin-big .5s var(--spring) both; }
+@keyframes kin-big  { 0%{transform:scale(.72);opacity:0} 60%{transform:scale(1.08)} 100%{transform:none;opacity:1} }
+.bubble.kin-soft    { animation: kin-soft .55s var(--ease) both; }
+@keyframes kin-soft { 0%{transform:translateY(10px);opacity:0} 100%{transform:none;opacity:1} }
+.bubble.kin-whisper { animation: kin-whisper .8s var(--ease) both; }
+@keyframes kin-whisper { 0%{opacity:0;filter:blur(3px)} 100%{opacity:.85;filter:blur(0)} }
+.bubble.kin-whisper .body-text { font-style: italic; opacity: .9; }
+@media (prefers-reduced-motion: reduce) {
+  .bubble[class*="kin-"] { animation: none !important; }
+  .msgs { transition: none; }
+}
+
+/* living avatars — a soft mood/accent glow (keeps the avatar creator intact) */
+:root[data-skin="tidal"] .avatar { box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 4px 14px color-mix(in srgb, var(--accent) 28%, transparent); }
+:root[data-skin="tidal"] .convo-head .avatar,
+:root[data-skin="tidal"] .p-bubble-av .avatar { box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 45%, transparent), inset -4px -5px 12px rgba(0,0,0,.28); }
+
+/* smooth-3D icon hint under Tidal — soft depth on the stroke glyphs */
+:root[data-skin="tidal"] .nav-item .ico svg,
+:root[data-skin="tidal"] .mtab .mti svg,
+:root[data-skin="tidal"] .ws svg,
+:root[data-skin="tidal"] .tray-item .ti-ic svg { filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.35)); }

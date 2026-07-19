@@ -582,6 +582,7 @@ function connectSocket() {
       const stick = message.sender.id === S.me.id || msgsNearBottom();
       S.chat.messages.push(message);
       appendMessage(message, stick);
+      updateChatMood(); // mood-chat: breathe toward the newest message's mood
       setIntent(message.sender.id, null);
       renderSmartReplies();
       updateVibeMeter();
@@ -1470,6 +1471,7 @@ async function openChat(conversationId) {
   if (savedBg) $('#msgs').dataset.bg = savedBg;
   d.messages.forEach(m => appendMessage(m, false));
   scrollMsgs();
+  updateChatMood(); // breathe the ambient toward the room's mood
   updateSeen();
   renderSmartReplies();
   wireComposer();
@@ -1809,6 +1811,41 @@ function pollHtml(m) {
 const REACT_SET = MOOD_KINDS;
 const QUICK_REACTS = ['love', 'joy', 'hyped', 'down']; // the 4 shown on long-press
 
+// ── Mood chats (Gen-Z layer) — kinetic message motion + breathing ambient ──
+// Map each mood/emotion to a kinetic "voice" and an ambient hue. Messages
+// animate to their meaning; the chat's top light breathes toward the room's mood.
+const KIN = {
+  hyped: 'pop', joy: 'pop', jk: 'pop', tea: 'pop', vibepass: 'pop',
+  love: 'beat', heartbreak: 'beat',
+  blown: 'big', skull: 'big', braincell: 'big', chrome: 'big',
+  down: 'soft', cry: 'soft', groan: 'soft', serious: 'soft', unsure: 'soft', overthink: 'soft',
+};
+const MOOD_HUE = {
+  joy: '#FFC24B', love: '#FF9C6E', hyped: '#FF6B57', jk: '#7CE39A', unsure: '#9AA6C8',
+  serious: '#6EA8FF', down: '#6E8BFF', blown: '#5FB4FF', skull: '#8FA9A6', heartbreak: '#FF8A80',
+  cry: '#6EA8FF', groan: '#8FA9A6', chrome: '#B8C6CC', vibepass: '#7CE39A', braincell: '#7CF5C4',
+  overthink: '#9AA6C8', tea: '#7CE39A',
+};
+/** The kinetic class for a message, from its silent flag or mood tag. */
+function kineticClass(m) {
+  if ((m.signals || []).some(s => s.type === 'silent')) return 'kin-whisper';
+  const mk = (m.signals || []).find(s => s.type === 'mood')?.kind;
+  return mk && KIN[mk] ? 'kin-' + KIN[mk] : '';
+}
+/** Breathe the chat's ambient light toward the most recent tagged mood — a soft
+ *  full-area tint on the message canvas that transitions smoothly. */
+function updateChatMood() {
+  const box = $('#msgs');
+  if (!box || !S.chat) return;
+  let hue = null;
+  const msgs = S.chat.messages;
+  for (let i = msgs.length - 1; i >= 0 && i > msgs.length - 12; i--) {
+    const mk = (msgs[i].signals || []).find(s => s.type === 'mood')?.kind;
+    if (mk && MOOD_HUE[mk]) { hue = MOOD_HUE[mk]; break; }
+  }
+  box.style.backgroundColor = hue ? `color-mix(in srgb, ${hue} 12%, transparent)` : 'transparent';
+}
+
 function reactionsHtml(m) {
   const rs = m.reactions || [];
   if (!rs.length) return '';
@@ -2016,6 +2053,7 @@ function messageHtml(m, prev) {
     return meta ? `<span class="sig ${s.type}">${icon(meta[0], 11)} ${meta[1]}${s.due ? ' · ' + esc(s.due) : ''}</span>` : '';
   }).join('');
   const moodBadge = moodSig ? `<span class="mood-badge" title="tagged: ${MOODS[moodSig.kind]?.label || moodSig.kind}">${mood(moodSig.kind, 26)}</span>` : '';
+  const kin = kineticClass(m); // mood-chat: the message's kinetic "voice"
   const bodyHtml = sealed ? `<span class="sealed-body" data-sealed>decrypting…</span>` : richBody(m.body);
   const quote = m.reply ? `
     <button class="reply-quote" data-jump="${m.reply.id}">
@@ -2031,7 +2069,7 @@ function messageHtml(m, prev) {
   <div class="msg ${mine ? 'mine' : ''} ${gap ? 'gap' : ''}" data-mid="${m.id}">
     ${!mine && gap ? avatarHtml(m.sender, 'sm') : (!mine ? '<span style="width:30px;flex-shrink:0"></span>' : '')}
     <div class="bubble-wrap">
-      <div class="bubble prio-edge ${m.priority} ${isSilent ? 'silent-bubble' : ''}">
+      <div class="bubble prio-edge ${m.priority} ${isSilent ? 'silent-bubble' : ''} ${kin}">
         ${moodBadge}
         ${showFrom ? `<div class="frm">${esc(m.sender.display_name)}</div>` : ''}
         ${quote}
