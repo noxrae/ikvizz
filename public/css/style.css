@@ -2262,8 +2262,21 @@ kbd {
 :root[data-skin="tidal"] .convo-head .avatar,
 :root[data-skin="tidal"] .p-bubble-av .avatar { box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 45%, transparent), inset -4px -5px 12px rgba(0,0,0,.28); }
 
-/* smooth-3D icon hint under Tidal — soft depth on the stroke glyphs */
-:root[data-skin="tidal"] .nav-item .ico svg,
-:root[data-skin="tidal"] .mtab .mti svg,
-:root[data-skin="tidal"] .ws svg,
-:root[data-skin="tidal"] .tray-item .ti-ic svg { filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.35)); }
+/* ── Tidal duotone icons (exactly like the concept page) ──
+   Filled accent parts render mint; "hot" parts amber; the prominent
+   navigation / world / composer icons get the mint→teal gradient + soft depth. */
+.i .a  { fill: var(--accent-2); stroke: none; }
+.i .hi { fill: rgba(255,255,255,.5); stroke: none; }
+.i .h  { stroke: #FFB570; }
+.i .hf { fill: #FFB570; stroke: none; }
+:root[data-skin="tidal"] .nav-item .ico .i,
+:root[data-skin="tidal"] .mtab .mti .i,
+:root[data-skin="tidal"] .ws .i,
+:root[data-skin="tidal"] .mt-worlds .mt-ws .i,
+:root[data-skin="tidal"] .composer-pill .pill-ic .i {
+  stroke: url(#ig);
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.4));
+}
+/* keep the colourful "+" tray chips as they are (white glyph on colour) */
+:root[data-skin="tidal"] .tray-item .ti-ic .i { stroke: #fff; filter: none; }
+:root[data-skin="tidal"] .tray-item .ti-ic .i .a { fill: #fff; }
